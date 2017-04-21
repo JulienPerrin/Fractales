@@ -1,3 +1,5 @@
+nbSeq = 0;
+
 function equilateralHeight(width) {
 	return Math.floor(Math.sqrt(width*width-(width/2)*(width/2))); 
 }
@@ -8,14 +10,26 @@ function sleep(ms) {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function draw(){
+function redraw() {
+    var canvas = document.getElementById('fractale');
+	if (canvas.getContext){
+        nbSeq++;
+        canvas.width = parseInt(document.getElementById("width").value) ;
+		canvas.height = equilateralHeight(canvas.width);
+        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+        draw();
+    }
+}
+
+async function draw(){
+    var idDraw = nbSeq;
 	var canvas = document.getElementById('fractale');
 	if (canvas.getContext){
 		var ctx = canvas.getContext('2d');
-        var width = parseInt(document.getElementById("width").value);
+        var width = parseInt(document.getElementById("width").value) ; 
+		var height = equilateralHeight(width);
         canvas.width = width;
-		canvas.height = equilateralHeight(width);
-		var height = canvas.height;
+        canvas.height = height;
 		
 		var id = ctx.createImageData(1,1); // only do this once per page
 		var d  = id.data;       			// only do this once per page
@@ -52,7 +66,8 @@ function draw(){
 					break;
 			}
 			ctx.putImageData(id, x, y);  
-			//await sleep(0.1);
+			await sleep(document.getElementById("intervalleTemps"));
+            if (nbSeq != idDraw) return;
 		}
 		ajoutLegende(ctx, width, height);
 	}

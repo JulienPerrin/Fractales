@@ -14,9 +14,11 @@
             <input type="number" value="0" name="intervalleTemps" id="intervalleTemps" > ms<br>
             <label for="width"></label>
             <input type="number" value="100" id="width" name="width">px <br>
+            <label for="legende">Asynchrone : </label>
+            <input type="checkbox" id="legende" name="legende" onClick="redraw()" checked="true" disabled>
             <label for="legende">Ajouter légende : </label>
-            <input type="button" id="legende" name="legende" onClick="draw()"><br>
-            <input type="submit">
+            <input type="checkbox" id="legende" name="legende" onClick="redraw()" checked="true" disabled><br>
+            <input type="button" value="Augmenter précision" onclick="redraw()">
         </form>
 	</div>
   </body>
