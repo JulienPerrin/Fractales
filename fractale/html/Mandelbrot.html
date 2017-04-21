@@ -7,15 +7,17 @@
   </head>
   <body> <!-- onload="draw(-0.77568377,0.13646737,0.01)" --> 
 	<div>
-		<p>Cette page utilise un algorithme simple pour générer la fractale de Mandelbrot. Pour faire varier l'image, il est possible de modifier les paramètre x_mean, y_mean et scale dans la fonction draw. </p>
+		<p>Cette page utilise un algorithme simple pour générer la fractale de Mandelbrot. Il est possible de zoomer sur la fracale avec la molette de la souris, et se déplacer en maintanant le clic gauche appuyé. 
+        On peut faire varier la précision du rendement en modifiant les paramètres. <br>Cliquer-droit et selectionner enregistrer permet de sauvegarder l'image sur votre  ordinateur. </p>
 		<canvas id="fractale" width="200" height="200"></canvas>
 	</div>
     <form name="precision">
       <input type="number" id="width" value="200"/>px &times;
       <input type="number" id="height" value="200"/>px <br/>
-      <input type="number" id="max" value="1000"/> itérations au plus
+      <input type="number" id="max" value="1000"/> itérations au plus 
       <input type="button" onClick="drawPrecise(x_mean, y_mean, scale)" value="Augmenter la précision"/>
     </form>
+    <input type="checkbox" id="ajouterLegende" checked="true" onClick="redraw()" />Legende
   </body>
   <script src="../js/mandelbrot.js"></script>
   <script src="../js/utils.js"></script>

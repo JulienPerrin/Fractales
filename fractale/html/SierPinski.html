@@ -8,7 +8,16 @@
   <body onload="draw()">
 	<div>
 		<p>Cette page utilise un algorithme simple pour dessiner le triangle de SierPinski. Pour faire varier le nombre de pixels simulés, modifier la valeur "width" du canvas et recharger la page. </p>
-		<canvas id="fractale" width="600" height=""></canvas>
+		<canvas id="fractale" width="600" height="519"></canvas>
+        <form>
+            <label for="intervalleTemps">Espacer l'intervalle de temps pour l'apparition d'un nouveau point : </label>
+            <input type="number" value="0" name="intervalleTemps" id="intervalleTemps" > ms<br>
+            <label for="width"></label>
+            <input type="number" value="100" id="width" name="width">px <br>
+            <label for="legende">Ajouter légende : </label>
+            <input type="button" id="legende" name="legende" onClick="draw()"><br>
+            <input type="submit">
+        </form>
 	</div>
   </body>
   <script src="../js/sierpinski.js"></script>

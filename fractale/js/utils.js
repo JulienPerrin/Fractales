@@ -1,10 +1,10 @@
 var canvas = document.getElementById('fractale'); 
 scale = 2; x_mean = 0; y_mean = 0;
-ratio = parseInt(window.getComputedStyle(document.getElementById("fractale"), null).getPropertyValue("width")) / canvas.width;
+ratio = calculerRatio();
 window.onload = function () {
 	var ctx = canvas.getContext('2d');
     scale = 2; x_mean = 0; y_mean = 0;
-    ratio = parseInt(window.getComputedStyle(document.getElementById("fractale"), null).getPropertyValue("width")) / canvas.width;
+    ratio = calculerRatio();
 	
     draw(x_mean, y_mean, scale);
 	
@@ -34,7 +34,7 @@ window.onload = function () {
 		}
 	},false);
 	canvas.addEventListener('mouseup',function(evt){
-		dragStart = null;
+        dragStart = null;
 		if (!dragged) zoom(evt.shiftKey ? -1 : 1 );
 	},false);
 
@@ -60,6 +60,10 @@ window.onload = function () {
 	canvas.addEventListener('mousewheel',handleScroll,false);
 };
 
+function redraw() {
+    draw(x_mean, y_mean, scale);
+}
+
 function translate(x, y) {
     x_mean += x ;
     y_mean += y ;
@@ -76,6 +80,10 @@ function calculePositionPx(x, y) {
     var evtx = (x/scale + 1) * canvas.width * ratio / 2; 
     var evty = (1 - y/scale) * canvas.height * ratio / 2; 
     return pt(evtx, evty);
+}
+
+function calculerRatio() {
+    return parseInt(window.getComputedStyle(document.getElementById("fractale"), null).getPropertyValue("width")) / canvas.width; 
 }
 
 function pt(x, y) {

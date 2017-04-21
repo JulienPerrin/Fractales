@@ -12,7 +12,8 @@ function draw(){
 	var canvas = document.getElementById('fractale');
 	if (canvas.getContext){
 		var ctx = canvas.getContext('2d');
-		var width = canvas.width;
+        var width = parseInt(document.getElementById("width").value);
+        canvas.width = width;
 		canvas.height = equilateralHeight(width);
 		var height = canvas.height;
 		
