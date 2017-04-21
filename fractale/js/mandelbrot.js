@@ -1,13 +1,27 @@
-function calculateHeight(width) {
-	return width; 
+function draw(x_mean, y_mean, scale) {
+    var canvas = document.getElementById('fractale');
+	if (canvas.getContext) {
+        canvas.width = 200;
+        canvas.height = 200;
+        drawDetaille(x_mean, y_mean, scale, 1000);
+    }
+}
+
+function drawPrecise(x_mean, y_mean, scale) {
+    var canvas = document.getElementById('fractale');
+	if (canvas.getContext) {
+        canvas.width = parseInt(document.getElementById("width").value);
+        canvas.height = parseInt(document.getElementById("height").value);
+        nbMaxIter = parseInt(document.getElementById("max").value);
+        drawDetaille(x_mean, y_mean, scale, nbMaxIter);
+    }
 }
 		
-function draw(){
+function drawDetaille(x_mean, y_mean, scale, max){
 	var canvas = document.getElementById('fractale');
 	if (canvas.getContext){
 		var ctx = canvas.getContext('2d');
 		var width = canvas.width;
-		canvas.height = calculateHeight(width);
 		var height = canvas.height;
 		
 		var id = ctx.createImageData(1,1); // only do this once per page
@@ -16,13 +30,10 @@ function draw(){
 		d[1]   = 0;//g
 		d[2]   = 0;//b
 		d[3]   = 255;//a: transparency, 0..255
-			
-		//ctx.beginPath();
-		max = 100;
 		
-		x_mean = -0.77568377;
-		y_mean = 0.13646737;
-		scale = 0.001;
+		 // = -0.77568377;
+		 // = 0.13646737;
+		 // = 0.01;
 		
 		var h_min = 1, h_max = 0, b_min = 1, b_max = 0, iteration_min = max, iteration_max = 0;
 		
@@ -55,7 +66,7 @@ function draw(){
 		for (var row = 0; row < height; row++) {
 			for (var col = 0; col < width; col++) {
 				var c_re = (scale/2.0)*(col - width/2.0)*4.0/width + x_mean;
-				var c_im = (scale/2.0)*(row - height/2.0)*4.0/width + y_mean;
+				var c_im = (scale/2.0)*(-row + height/2.0)*4.0/width + y_mean;
 				var x = 0, y = 0;
 				var iteration = 0;
 				while (x*x+y*y <= 4 && iteration < max) {
@@ -80,24 +91,25 @@ function draw(){
 					d[1]   = 0;//g
 					d[2]   = 0;//b
 				}
+				
 				ctx.putImageData(id, col, row);
 				//console.log(iteration);
 			}
 		}
-		ajoutLegende(ctx,width,height);
+		ajoutLegende(ctx, width, height, x_mean, y_mean, scale, max);
 	}
 	
 	return [h_min, h_max, b_min, b_max, iteration_min, iteration_max];
 }
 
-function ajoutLegende(ctx, width, height) {
+function ajoutLegende(ctx, width, height, x_mean, y_mean, scale, max) {
 	ctx.font = Math.floor(width / 30) + "px Georgia";
 	ctx.textAlign = "right";
 	ctx.fillStyle = "white";
 	ctx.fillText("max_iterations : " + max, width * 29 / 30, height * 24 / 28);
-	ctx.fillText("scale : " + scale, width * 29 / 30, height * 25 / 28);
-	ctx.fillText("x_mean : " + x_mean, width * 29 / 30, height * 26 / 28);
-	ctx.fillText("y_mean : " + y_mean, width * 29 / 30, height * 27 / 28);
+	ctx.fillText("scale : " + scale.toPrecision(3), width * 29 / 30, height * 25 / 28);
+	ctx.fillText("x_mean : " + x_mean.toPrecision(3), width * 29 / 30, height * 26 / 28);
+	ctx.fillText("y_mean : " + y_mean.toPrecision(3), width * 29 / 30, height * 27 / 28);
 }
 
 function HSVtoRGB(h, s, v) {
