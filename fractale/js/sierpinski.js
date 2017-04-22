@@ -66,10 +66,14 @@ async function draw(){
 					break;
 			}
 			ctx.putImageData(id, x, y);  
-			await sleep(document.getElementById("intervalleTemps"));
+			if (document.getElementById("asynchrone").checked && parseInt(document.getElementById("intervalleTemps").value) > 0) {
+                await sleep(parseInt(document.getElementById("intervalleTemps").value));
+            }
             if (nbSeq != idDraw) return;
 		}
-		ajoutLegende(ctx, width, height);
+        
+        if (document.getElementById("legende").checked) ajoutLegende(ctx, width, height);
+        
 	}
 	
 }
