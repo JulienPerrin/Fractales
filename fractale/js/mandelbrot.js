@@ -39,16 +39,7 @@ function drawDetaille(x_mean, y_mean, scale, max){
 		
 		for (var col = 0; col < width; col+=15) {
 			for (var row = 0; row < height; row+=15) {
-				var c_re = (scale/2.0)*(col - width/2.0)*4.0/width + x_mean;
-				var c_im = (scale/2.0)*(row - height/2.0)*4.0/width + y_mean;
-				var x = 0, y = 0;
-				var iteration = 0;
-				while (x*x+y*y <= 4 && iteration < max) {
-					var x_new = x*x - y*y + c_re;
-					y = 2*x*y + c_im;
-					x = x_new;
-					iteration++;
-				}
+				var iteration = itereZ(col, row, scale, x_mean, y_mean, width, height, max);
 				if (iteration < max) {
 					iteration_min = Math.min(iteration, iteration_min);
 					iteration_max = Math.max(iteration, iteration_max);
@@ -65,22 +56,14 @@ function drawDetaille(x_mean, y_mean, scale, max){
 		
 		for (var row = 0; row < height; row++) {
 			for (var col = 0; col < width; col++) {
-				var c_re = (scale/2.0)*(col - width/2.0)*4.0/width + x_mean;
-				var c_im = (scale/2.0)*(-row + height/2.0)*4.0/width + y_mean;
-				var x = 0, y = 0;
-				var iteration = 0;
-				while (x*x+y*y <= 4 && iteration < max) {
-					var x_new = x*x - y*y + c_re;
-					y = 2*x*y + c_im;
-					x = x_new;
-					iteration++;
-				}
+				var iteration = itereZ(col, row, scale, x_mean, y_mean, width, height, max);
 				if (iteration < max) {
 					var h0 = iteration/max;
 					var h = (h0-(h_max+h_min)/2)/(h_max-h_min)+1/2;
 					var s   = 1;
 					var b0 = iteration/(iteration+8);
-					var b  = (b0-(b_max+b_min)/2)*0.8/(b_max-b_min)+1.2/2;
+                    //ici, on cherche à eviter d'avoir une brillance trop faible
+                    var b  = (b0-(b_max+b_min)/2)*0.8/(b_max-b_min)+1.2/2;
 					var hsbToRgb = HSVtoRGB(h, s, b);
 					d[0] = hsbToRgb.r;//r
 					d[1] = hsbToRgb.g;//g
@@ -100,6 +83,20 @@ function drawDetaille(x_mean, y_mean, scale, max){
 	}
 	
 	return [h_min, h_max, b_min, b_max, iteration_min, iteration_max];
+}
+
+function itereZ(col, row, scale, x_mean, y_mean, width, height, max) {
+    var c_re = (scale/2.0)*(col - width/2.0)*4.0/width + x_mean;
+    var c_im = (scale/2.0)*(height/2.0 - row)*4.0/width + y_mean;
+    var x = 0, y = 0;
+    var iteration = 0;
+    while (x*x+y*y <= 4 && iteration < max) {
+        var x_new = x*x - y*y + c_re;
+        y = 2*x*y + c_im;
+        x = x_new;
+        iteration++;
+    }
+    return iteration;
 }
 
 function ajoutLegende(ctx, width, height, x_mean, y_mean, scale, max) {
