@@ -5,8 +5,8 @@ function drawSimple() {
 function draw(x_mean, y_mean, scale) {
     var canvas = document.getElementById('fractale');
 	if (canvas.getContext) {
-        canvas.width = 200;
-        canvas.height = 200;
+        canvas.width = 100;
+        canvas.height = 100;
         drawPoint(x_mean, y_mean, scale, 1000);
     }
 }
