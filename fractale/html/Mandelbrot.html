@@ -9,11 +9,11 @@
 	<div>
 		<p>Cette page utilise un algorithme simple pour générer la fractale de Mandelbrot. Il est possible de zoomer sur la fracale avec la molette de la souris, et se déplacer en maintanant le clic gauche appuyé. 
         On peut faire varier la précision du rendement en modifiant les paramètres. <br>Cliquer-droit et selectionner enregistrer permet de sauvegarder l'image sur votre  ordinateur. </p>
-		<canvas id="fractale" width="200" height="200"></canvas>
+		<canvas id="fractale" width="100" height="100"></canvas>
 	</div>
     <form name="precision">
-      <input type="number" id="width" value="200"/>px &times;
-      <input type="number" id="height" value="200"/>px <br/>
+      <input type="number" id="width" value="100"/>px &times;
+      <input type="number" id="height" value="100"/>px <br/>
       <input type="number" id="max" value="1000"/> itérations au plus 
       <input type="button" onClick="drawPrecise(x_mean, y_mean, scale)" value="Augmenter la précision"/>
     </form>
