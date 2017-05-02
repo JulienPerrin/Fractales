@@ -1,10 +1,18 @@
 var canvas = document.getElementById('fractale'); 
 scale = 2; x_mean = 0; y_mean = 0;
 ratio = calculerRatio();
+simple = typeof drawSimple === "function";
+detaille = typeof draw === "function";
+precise = typeof drawPrecise === "function";
+
+
 window.onload = function () {
 	var ctx = canvas.getContext('2d');
     scale = 2; x_mean = 0; y_mean = 0;
     ratio = calculerRatio();
+    simple = typeof drawSimple === "function";
+    detaille = typeof draw === "function";
+    precise = typeof precise === "function";
 	
     draw(x_mean, y_mean, scale);
 	
@@ -61,7 +69,7 @@ window.onload = function () {
 };
 
 function redraw() {
-    draw(x_mean, y_mean, scale);
+    drawPrecise(x_mean, y_mean, scale);
 }
 
 function translate(x, y) {

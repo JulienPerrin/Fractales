@@ -10,18 +10,18 @@ function sleep(ms) {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function redraw() {
+function draw() {
     var canvas = document.getElementById('fractale');
 	if (canvas.getContext){
         nbSeq++;
         canvas.width = parseInt(document.getElementById("width").value) ;
 		canvas.height = equilateralHeight(canvas.width);
         canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-        draw();
+        drawtorefactor();
     }
 }
 
-async function draw(){
+async function drawtorefactor(){
     var idDraw = nbSeq;
 	var canvas = document.getElementById('fractale');
 	if (canvas.getContext){

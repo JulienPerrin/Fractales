@@ -1,9 +1,13 @@
+function drawSimple() {
+    draw(0, 0, 2);
+}
+
 function draw(x_mean, y_mean, scale) {
     var canvas = document.getElementById('fractale');
 	if (canvas.getContext) {
         canvas.width = 200;
         canvas.height = 200;
-        drawDetaille(x_mean, y_mean, scale, 1000);
+        drawPoint(x_mean, y_mean, scale, 1000);
     }
 }
 
@@ -13,11 +17,11 @@ function drawPrecise(x_mean, y_mean, scale) {
         canvas.width = parseInt(document.getElementById("width").value);
         canvas.height = parseInt(document.getElementById("height").value);
         nbMaxIter = parseInt(document.getElementById("max").value);
-        drawDetaille(x_mean, y_mean, scale, nbMaxIter);
+        drawPoint(x_mean, y_mean, scale, nbMaxIter);
     }
 }
 		
-function drawDetaille(x_mean, y_mean, scale, max){
+function drawPoint(x_mean, y_mean, scale, max){
 	var canvas = document.getElementById('fractale');
 	if (canvas.getContext){
 		var ctx = canvas.getContext('2d');
