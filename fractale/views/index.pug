@@ -1,0 +1,19 @@
+doctype html
+html
+  head
+    meta(charset='utf-8')
+    title Mandelbrot
+    link(rel='stylesheet', type='text/css', href='/stylesheets/style.css')
+  body
+    // onload="draw(-0.77568377,0.13646737,0.01)"
+    ul
+      li
+        a(href='mandelbrot') Fractale de Mandelbrot
+      li
+        a(href='sierpinski') Triangle de SierPinski
+    div
+      p
+        | Cette page a été créée pricipalement à visée éducative. On peut y trouver diverses simulations qui génèrent des fractales.
+        br
+        | Il est également possible de télécharger les résultats obtenus via la simulation en cliquant-droit et en selectionnant "enregistrer l'image".
+      canvas#fractale(width='200', height='200')

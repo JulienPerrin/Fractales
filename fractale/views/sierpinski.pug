@@ -1,0 +1,29 @@
+doctype html
+html
+  head
+    meta(charset='utf-8')
+    meta(name='viewport', content='width=device-width,initial-scale=1,shrink-to-fit=no')
+    title SierPinski
+    link(rel='stylesheet', type='text/css', href='/stylesheets/style.css')
+  body(onload='draw()')
+    div
+      p Cette page utilise un algorithme simple pour dessiner le triangle de SierPinski. Pour faire varier le nombre de pixels simulés, modifier la valeur "width" du canvas et recharger la page.
+      canvas#fractale(width='600', height='519')
+      form
+        label(for='asynchrone') Asynchrone :
+        input#asynchrone(type='checkbox', name='asynchrone', onclick='redraw()', checked='')
+        br
+        label(for='intervalleTemps') Espacer l'intervalle de temps d'apparition d'un nouveau point :
+        input.form-control#intervalleTemps(type='number', value='1', name='intervalleTemps')
+        |  ms
+        br
+        label(for='width')
+        input.form-control#width(type='number', value='600', name='width')
+        | px
+        br
+        label(for='legende') Ajouter légende :
+        input#legende(type='checkbox', name='legende', onclick='draw()', checked='')
+        br
+        input(type='button', value='Augmenter précision', onclick='draw()')
+    script(src='/javascripts/sierpinski.js')
+    script(src='/javascripts/utils.js')
