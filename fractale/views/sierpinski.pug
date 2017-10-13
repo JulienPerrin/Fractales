@@ -11,7 +11,7 @@ html
       canvas#fractale(width='600', height='519')
       form
         label(for='asynchrone') Asynchrone :
-        input#asynchrone(type='checkbox', name='asynchrone', onclick='redraw()', checked='')
+        input#asynchrone(type='checkbox', name='asynchrone', onclick='draw()', checked='')
         br
         label(for='intervalleTemps') Espacer l'intervalle de temps d'apparition d'un nouveau point :
         input.form-control#intervalleTemps(type='number', value='1', name='intervalleTemps')
