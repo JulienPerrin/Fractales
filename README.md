@@ -2,7 +2,7 @@
 
 Diverses pages html simples qui génèrent une fractale en utilisant simplement son navigateur web grâce à la technologie html5 canvas.
 
-Pour tester (privilégier Chrome et désactiver l'accélération graphique) : 
+Pour tester (privilégier Chrome et désactiver l'accélération graphique pour un résultat optimum) : 
 
 https://julienperrin.github.io/Fractales/public
 
