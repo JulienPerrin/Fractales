@@ -1,0 +1,26 @@
+canvas {
+  border: 1px solid black;
+  width: 600px;
+  height: 600px;
+}
+
+input[type="number"] {
+  width: 50px;
+}
+
+figure {
+  border: thin #c0c0c0 solid;
+  display: flex;
+  flex-flow: column;
+  padding: 5px;
+  max-width: 600px;
+  margin: auto;
+}
+
+figcaption {
+  background-color: #222;
+  color: #fff;
+  font: italic smaller sans-serif;
+  padding: 3px;
+  text-align: center;
+}
