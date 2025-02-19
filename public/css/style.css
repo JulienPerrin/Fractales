@@ -13,7 +13,6 @@ figure {
   flex-flow: column;
   padding: 5px;
   max-width: 600px;
-  margin: auto;
 }
 
 figcaption {

@@ -108,11 +108,18 @@ function ajoutLegende(ctx, width, height, x_mean, y_mean, scale, max) {
         ctx.font = Math.floor(width / 30) + "px Georgia";
         ctx.textAlign = "right";
         ctx.fillStyle = "white";
-        ctx.fillText("max_iterations : " + max, width * 29 / 30, height * 24 / 28);
-        ctx.fillText("scale : " + scale.toPrecision(3), width * 29 / 30, height * 25 / 28);
-        ctx.fillText("x_mean : " + x_mean.toPrecision(3), width * 29 / 30, height * 26 / 28);
-        ctx.fillText("y_mean : " + y_mean.toPrecision(3), width * 29 / 30, height * 27 / 28);
+        ctx.fillText(`max_iterations : ${max}`, width * 29 / 30, height * 24 / 28);
+        ctx.fillText(`scale : ${scale.toPrecision(3)}`, width * 29 / 30, height * 25 / 28);
+        ctx.fillText(`x_mean : ${x_mean.toPrecision(3)}`, width * 29 / 30, height * 26 / 28);
+        ctx.fillText(`y_mean : ${y_mean.toPrecision(3)}`, width * 29 / 30, height * 27 / 28);
     }
+	var positionAffichee = document.getElementById('positionAffichee');
+	positionAffichee.innerHTML = `<p>
+		max_iterations: ${max}<br/>
+        scale: ${scale.toPrecision(3)}<br/>
+        x_mean: ${x_mean.toPrecision(3)}<br/>
+        y_mean: ${y_mean.toPrecision(3)}<br/>
+	<p>`;
 }
 
 function HSVtoRGB(h, s, v) {
