@@ -4,7 +4,7 @@ Diverses pages html simples qui génèrent une fractale en utilisant simplement 
 
 Pour tester : 
 
-https://julienperrin.github.io/Fractales/public/index.html
+https://julienperrin.github.io/Fractales/public
 
 ## Example d'images de la fractale Mandelbrot 
 
