@@ -8,9 +8,11 @@ https://julienperrin.github.io/Fractales/public
 
 ## Example d'images de la fractale Mandelbrot 
 
-![Mandelbrot_example_1.png](public/img/mandelbrot_example_1.png)
+![mandelbrot_example_1.png](public/img/mandelbrot_example_1.png)
 
-![Mandelbrot_example_21.png](public/img/mandelbrot_example_2.png)
+![mandelbrot_example_2.png](public/img/mandelbrot_example_2.png)
+
+![mandelbrot_wallpaper.png](public/img/mandelbrot_wallpaper.png)
 
 ## How to run server locally
 
