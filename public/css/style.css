@@ -1,6 +1,7 @@
 canvas {
   border: 1px solid black;
-  height: 600px;
+  width: 600px;
+  max-width: 100%;
 }
 
 input[type="number"] {
@@ -21,4 +22,10 @@ figcaption {
   font: italic smaller sans-serif;
   padding: 3px;
   text-align: center;
+}
+
+@media (max-width: 640px) {
+  figure {
+    max-width: 90%;
+  }
 }
