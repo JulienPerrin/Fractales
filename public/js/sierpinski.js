@@ -1,4 +1,4 @@
-nbSeq = 0;
+let nbSeq = 0;
 
 function equilateralHeight(width) {
   return Math.floor(Math.sqrt(width * width - (width / 2) * (width / 2)));
