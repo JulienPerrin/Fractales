@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Mandelbrot</title>
+    <link rel="icon" type="image/ico" href="favicon.ico" />
+    <link rel="stylesheet" type="text/css" href="css/style.css" />
+  </head>
+  <body>
+    <!-- onload="draw(-0.77568377,0.13646737,0.01)" -->
+    <div>
+      <p>
+        Cette page utilise un algorithme simple pour générer la fractale de Mandelbrot. Il est possible de zoomer sur la fracale
+        avec la molette de la souris, et se déplacer en maintanant le clic gauche appuyé. On peut faire varier la précision du
+        rendement en modifiant les paramètres.
+      </p>
+      <p>Cliquer-droit et selectionner enregistrer permet de sauvegarder l'image sur votre ordinateur.</p>
+      <p>Il est recommandé d'activer l'accélération graphique sur cette page.</p>
+      <figure>
+        <div>
+          <canvas id="fractale" width="100" height="100"></canvas>
+          <figcaption id="positionAffichee"></figcaption>
+        </div>
+      </figure>
+    </div>
+    <form name="precision">
+      <input type="number" id="width" value="100" />px &times; <input type="number" id="height" value="100" />px <br />
+      <input type="number" id="max" value="10" /> itérations au plus
+      <input type="button" onClick="drawPrecise(x_mean, y_mean, scale)" value="Augmenter la précision" />
+    </form>
+    <input type="checkbox" id="ajouterLegende" checked="true" onClick="draw()" />Legende
+  </body>
+  <script src="js/gpu-browser.js"></script>
+  <script src="js/mandelbrot_with_gpu.js"></script>
+  <script src="js/utils.js"></script>
+</html>
