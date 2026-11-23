@@ -15,6 +15,13 @@ import {
 function setupGpuDom(): {
   canvas: HTMLCanvasElement;
   replacementCanvas: HTMLCanvasElement;
+  ctxMock: {
+    fillText: ReturnType<typeof vi.fn>;
+    drawImage: ReturnType<typeof vi.fn>;
+    font: string;
+    textAlign: string;
+    fillStyle: string;
+  };
   kernelMock: ReturnType<typeof vi.fn>;
   gpuInstanceMock: { createKernel: ReturnType<typeof vi.fn> };
 } {
@@ -32,6 +39,7 @@ function setupGpuDom(): {
   const replacementCanvas = document.createElement("canvas");
   const ctxMock = {
     fillText: vi.fn(),
+    drawImage: vi.fn(),
     font: "",
     textAlign: "left",
     fillStyle: "",
@@ -83,7 +91,7 @@ function setupGpuDom(): {
     }) as unknown as { new (): never },
   };
 
-  return { canvas, replacementCanvas, kernelMock, gpuInstanceMock };
+  return { canvas, replacementCanvas, ctxMock, kernelMock, gpuInstanceMock };
 }
 
 describe("mandelbrot_with_gpu", () => {
@@ -175,56 +183,88 @@ describe("mandelbrot_with_gpu", () => {
     expect(args[7]).toBe(9 / 10);
   });
 
-  it("drawSimple, draw, drawPrecise, and drawPoint run GPU kernel and replace canvas", () => {
-    const { canvas, replacementCanvas, kernelMock } = setupGpuDom();
+  it("GPU kernel maps bottom thread.y=0 to negative c_im and top thread.y=output.y to positive c_im", () => {
+    const { gpuInstanceMock } = setupGpuDom();
+    vi.spyOn(console, "log").mockImplementation(() => {});
+
+    let capturedKernel:
+      | ((
+          this: { thread: { x: number; y: number; z: number }; output: { x: number; y: number; z: number }; color: ReturnType<typeof vi.fn> },
+          ...args: number[]
+        ) => void)
+      | undefined;
+    gpuInstanceMock.createKernel.mockImplementation((fn: unknown) => {
+      capturedKernel = fn as typeof capturedKernel;
+      const k = vi.fn(() => "rendered");
+      return Object.assign(k, {
+        setOutput: vi.fn(() => k),
+        setGraphical: vi.fn(() => k),
+        canvas: document.createElement("canvas"),
+      });
+    });
+
+    drawPoint(0, 0, 2, 10);
+    expect(capturedKernel).toBeDefined();
+
+    // At xMean=0, yMean=1.5, scale=1, max=2:
+    // top (thread.y=10) -> c_im = +2.5 (escapes immediately at iter 1 -> colored)
+    // bottom (thread.y=0) -> c_im = +0.5 (stays bounded at iter 2 -> black [0,0,0])
+    const colorTop = vi.fn();
+    capturedKernel!.call(
+      { thread: { x: 5, y: 10, z: 0 }, output: { x: 10, y: 10, z: 1 }, color: colorTop },
+      1, 0, 1.5, 2, 0.1, 1, 0.1, 0.9
+    );
+    const colorBottom = vi.fn();
+    capturedKernel!.call(
+      { thread: { x: 5, y: 0, z: 0 }, output: { x: 10, y: 10, z: 1 }, color: colorBottom },
+      1, 0, 1.5, 2, 0.1, 1, 0.1, 0.9
+    );
+    expect(colorTop.mock.calls[0]!.slice(0, 3)).not.toEqual([0, 0, 0]);
+    expect(colorBottom).toHaveBeenCalledWith(0, 0, 0, 255);
+  });
+
+  it("drawSimple, draw, drawPrecise, and drawPoint render onto #fractale without removing it", () => {
+    const { canvas, replacementCanvas, ctxMock, kernelMock } = setupGpuDom();
     vi.spyOn(console, "log").mockImplementation(() => {});
 
     drawSimple();
     expect(kernelMock).toHaveBeenCalled();
-    expect(document.contains(replacementCanvas)).toBe(true);
-    expect(document.contains(canvas)).toBe(false);
+    expect(document.getElementById("fractale")).toBe(canvas);
+    expect(ctxMock.drawImage).toHaveBeenCalledWith(replacementCanvas, 0, 0);
 
-    // Re-setup for draw and drawPrecise
-    setupGpuDom();
     draw(0, 0, 2);
-    expect(document.querySelectorAll("canvas").length).toBe(1);
+    expect(document.getElementById("fractale")).toBe(canvas);
 
-    const { canvas: c3 } = setupGpuDom();
     drawPrecise(0, 0, 2);
-    expect(c3.width).toBe(30);
-    expect(c3.height).toBe(30);
+    expect(canvas.width).toBe(30);
+    expect(canvas.height).toBe(30);
 
     // When getContext returns null
-    const { canvas: c4 } = setupGpuDom();
-    vi.spyOn(c4, "getContext").mockReturnValue(null);
+    vi.spyOn(canvas, "getContext").mockReturnValue(null);
     draw(0, 0, 2);
     drawPrecise(0, 0, 2);
     drawPoint(0, 0, 2, 10);
   });
 
-  it("initMandelbrotGpu wires viewport and form controls", () => {
-    const { kernelMock } = setupGpuDom();
+  it("initMandelbrotGpu wires viewport and form controls and keeps #fractale interactive", () => {
+    const { canvas, kernelMock } = setupGpuDom();
     vi.spyOn(console, "log").mockImplementation(() => {});
 
     initMandelbrotGpu();
     expect(kernelMock).toHaveBeenCalledTimes(1);
 
-    // Restore #fractale id on replacement or re-check wiring calls
     const btn = document.getElementById("btnPrecise") as HTMLInputElement;
     const chk = document.getElementById("ajouterLegende") as HTMLInputElement;
-    // Re-attach id="fractale" so subsequent draw calls find the canvas
-    document.querySelector("canvas")!.id = "fractale";
-    vi.spyOn(document.querySelector("canvas")!, "getContext").mockReturnValue(
-      {} as CanvasRenderingContext2D
-    );
     btn.click();
     expect(kernelMock).toHaveBeenCalledTimes(2);
+    expect(canvas.width).toBe(30);
+    expect(canvas.height).toBe(30);
 
-    document.querySelector("canvas")!.id = "fractale";
-    vi.spyOn(document.querySelector("canvas")!, "getContext").mockReturnValue(
-      {} as CanvasRenderingContext2D
-    );
     chk.click();
     expect(kernelMock).toHaveBeenCalledTimes(3);
+
+    // Wheel zoom on the same #fractale canvas still works after rendering
+    canvas.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, cancelable: true }));
+    expect(kernelMock.mock.calls.length).toBeGreaterThan(3);
   });
 });

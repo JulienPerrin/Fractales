@@ -29,7 +29,8 @@ export function drawPrecise(x_mean, y_mean, scale) {
 }
 export function drawPoint(x_mean, y_mean, scale, max) {
     const canvas = document.getElementById("fractale");
-    if (!canvas.getContext("2d")) {
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
         return;
     }
     const gpu = initGPU();
@@ -68,7 +69,7 @@ export function drawPoint(x_mean, y_mean, scale, max) {
         const c_re = ((scaleArg / 2.0) * (this.thread.x - this.output.x / 2.0) * 4.0) /
             this.output.x +
             xMeanArg;
-        const c_im = ((scaleArg / 2.0) * (this.output.y / 2.0 - this.thread.y) * 4.0) /
+        const c_im = ((scaleArg / 2.0) * (this.thread.y - this.output.y / 2.0) * 4.0) /
             this.output.x +
             yMeanArg;
         let z = [0, 0];
@@ -136,8 +137,8 @@ export function drawPoint(x_mean, y_mean, scale, max) {
         .setOutput([width, height])
         .setGraphical(true);
     console.log("matriceOut", render(scale, x_mean, y_mean, max, h_min, h_max, b_min, b_max));
-    const canvasThatReplace = render.canvas;
-    canvas.replaceWith(canvasThatReplace);
+    ctx.drawImage(render.canvas, 0, 0);
+    ajoutLegende(ctx, width, height, x_mean, y_mean, scale, max);
     console.log("[h_min, h_max, b_min, b_max, iteration_min, iteration_max]", [
         h_min,
         h_max,
