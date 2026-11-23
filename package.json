@@ -3,6 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --reporter=dot",
+    "test:coverage": "vitest run --coverage --coverage.reporter=text --reporter=dot",
     "dev": "nodemon server.js",
     "start": "node server.js"
   },
@@ -11,5 +16,9 @@
     "serve-static": "^1.16.2"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^5.1.1",
+    "jsdom": "^31.0.1",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.1"
   }
 }

@@ -35,7 +35,7 @@
       <input type="number" id="max" value="10" /> itérations au plus
       <input
         type="button"
-        onClick="drawPrecise(x_mean, y_mean, scale)"
+        id="btnPrecise"
         value="Augmenter la précision"
       />
     </form>
@@ -43,9 +43,7 @@
       type="checkbox"
       id="ajouterLegende"
       checked="true"
-      onClick="draw()"
     />Legende
   </body>
-  <script src="js/mandelbrot.js"></script>
-  <script src="js/utils.js"></script>
+  <script type="module" src="js/mandelbrot.js"></script>
 </html>

@@ -10,7 +10,7 @@
     <link rel="icon" type="image/ico" href="favicon.ico"/>
     <link rel="stylesheet" type="text/css" href="css/style.css" />
   </head>
-  <body onload="draw()">
+  <body>
     <div>
       <p>
         Cette page utilise un algorithme simple pour dessiner le triangle de
@@ -24,7 +24,6 @@
           type="checkbox"
           id="asynchrone"
           name="asynchrone"
-          onClick="draw()"
           checked="true"
         /><br />
         <label for="intervalleTemps"
@@ -51,13 +50,11 @@
           type="checkbox"
           id="legende"
           name="legende"
-          onClick="draw()"
           checked="true"
         /><br />
-        <input type="button" value="Augmenter précision" onclick="draw()" />
+        <input type="button" id="btnPrecise" value="Augmenter précision" />
       </form>
     </div>
   </body>
-  <script src="js/sierpinski.js"></script>
-  <script src="js/utils.js"></script>
+  <script type="module" src="js/sierpinski.js"></script>
 </html>

@@ -26,11 +26,10 @@
     <form name="precision">
       <input type="number" id="width" value="100" />px &times; <input type="number" id="height" value="100" />px <br />
       <input type="number" id="max" value="10" /> itérations au plus
-      <input type="button" onClick="drawPrecise(x_mean, y_mean, scale)" value="Augmenter la précision" />
+      <input type="button" id="btnPrecise" value="Augmenter la précision" />
     </form>
-    <input type="checkbox" id="ajouterLegende" checked="true" onClick="draw()" />Legende
+    <input type="checkbox" id="ajouterLegende" checked="true" />Legende
   </body>
   <script src="js/gpu-browser.js"></script>
-  <script src="js/mandelbrot_with_gpu.js"></script>
-  <script src="js/utils.js"></script>
+  <script type="module" src="js/mandelbrot_with_gpu.js"></script>
 </html>

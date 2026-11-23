@@ -1,99 +1,88 @@
-var canvas = document.getElementById('fractale'); 
-scale = 2; x_mean = 0; y_mean = 0;
-ratio = calculerRatio();
-simple = typeof drawSimple === "function";
-detaille = typeof draw === "function";
-precise = typeof drawPrecise === "function";
-
-
-window.onload = function () {
-	var ctx = canvas.getContext('2d');
-    scale = 2; x_mean = 0; y_mean = 0;
-    ratio = calculerRatio();
-    simple = typeof drawSimple === "function";
-    detaille = typeof draw === "function";
-    precise = typeof precise === "function";
-	
-    draw(x_mean, y_mean, scale);
-	
-	var last = pt(0, 0); 
-    var draggedStart, dragStart, dragged; 
-    
-	canvas.addEventListener ('mousedown', function(evt) {
-        if (event.which == 1) {
-            document.body.style.mozUserSelect = document.body.style.webkitUserSelect = document.body.style.userSelect = 'none';
-            var evtx = event.offsetX || (event.pageX - canvas.offsetLeft);
-            var evty = event.offsetY || (event.pageY - canvas.offsetTop);
-            last = calculeCoordonnees(evtx, evty); 
-            mean_start = pt(x_mean, y_mean); 
-            draggedStart = calculeCoordonnees(evtx, evty); 
-            dragged = false; dragStart=true;
-        }
-	},false);
-	canvas.addEventListener('mousemove', function(evt){
-        var evtx = event.offsetX || (event.pageX - canvas.offsetLeft);
-        var evty = event.offsetY || (event.pageY - canvas.offsetTop);
-        last = calculeCoordonnees(evtx, evty); 
-		dragged = true;
-		if (dragStart) {
-			x_mean = mean_start.x + (draggedStart.x - last.x) ;  
-			y_mean = mean_start.y + (draggedStart.y - last.y) ;
-			draw(x_mean, y_mean, scale);
-		}
-	},false);
-	canvas.addEventListener('mouseup',function(evt){
-        dragStart = null;
-		if (!dragged) zoom(evt.shiftKey ? -1 : 1 );
-	},false);
-
-	var scaleFactor = 1.1;
-	var zoom = function(clicks){
-        if (parseInt(window.getComputedStyle(document.getElementById("fractale"), null).getPropertyValue("width")) / canvas.width == ratio) {
-            var pointZoom = calculePositionPx(last.x, last.y);
-            translate(last.x, last.y);
-            var factor = Math.pow(scaleFactor,clicks);
-            scale = scale / factor;
-            last = calculeCoordonnees(pointZoom.x, pointZoom.y);
-            translate(-last.x, -last.y);
-            draw(x_mean, y_mean, scale);
-        }
-	}
-
-	var handleScroll = function(evt){
-		var delta = evt.wheelDelta ? evt.wheelDelta/40 : evt.detail ? -evt.detail : 0;
-		if (delta) zoom(delta);
-		return evt.preventDefault() && false;
-	};
-	canvas.addEventListener('DOMMouseScroll',handleScroll,false);
-	canvas.addEventListener('mousewheel',handleScroll,false);
-};
-
-function redraw() {
-    drawPrecise(x_mean, y_mean, scale);
+export function pt(x, y) {
+    return { x, y };
 }
-
-function translate(x, y) {
-    x_mean += x ;
-    y_mean += y ;
-    draw(x_mean, y_mean, scale);
+export function calculerRatio(canvas) {
+    const cssWidth = parseInt(window.getComputedStyle(canvas, null).getPropertyValue("width"), 10);
+    return cssWidth / canvas.width;
 }
-
-function calculeCoordonnees(evtx, evty) {
-    var x = (2 * evtx / ratio / canvas.width - 1) * scale; 
-    var y = (canvas.height - 2 * evty / ratio) / canvas.height * scale ; 
+export function calculeCoordonnees(evtx, evty, canvas, ratio, scale) {
+    const x = ((2 * evtx) / ratio / canvas.width - 1) * scale;
+    const y = ((canvas.height - (2 * evty) / ratio) / canvas.height) * scale;
     return pt(x, y);
 }
-
-function calculePositionPx(x, y) {
-    var evtx = (x/scale + 1) * canvas.width * ratio / 2; 
-    var evty = (1 - y/scale) * canvas.height * ratio / 2; 
+export function calculePositionPx(x, y, canvas, ratio, scale) {
+    const evtx = ((x / scale + 1) * canvas.width * ratio) / 2;
+    const evty = ((1 - y / scale) * canvas.height * ratio) / 2;
     return pt(evtx, evty);
 }
-
-function calculerRatio() {
-    return parseInt(window.getComputedStyle(document.getElementById("fractale"), null).getPropertyValue("width")) / canvas.width; 
+export function translate(state, x, y, drawFn) {
+    state.xMean += x;
+    state.yMean += y;
+    drawFn(state.xMean, state.yMean, state.scale);
 }
-
-function pt(x, y) {
-    return {x, y};
+function getEventPosition(evt, canvas) {
+    const evtx = evt.offsetX || evt.pageX - canvas.offsetLeft;
+    const evty = evt.offsetY || evt.pageY - canvas.offsetTop;
+    return pt(evtx, evty);
+}
+export function initViewport(canvas, drawFn) {
+    const state = {
+        xMean: 0,
+        yMean: 0,
+        scale: 2,
+    };
+    const ratio = calculerRatio(canvas);
+    drawFn(state.xMean, state.yMean, state.scale);
+    let last = pt(0, 0);
+    let meanStart = pt(0, 0);
+    let draggedStart = pt(0, 0);
+    let dragStart = false;
+    let dragged = false;
+    canvas.addEventListener("mousedown", (evt) => {
+        if (evt.button === 0) {
+            document.body.style.userSelect = "none";
+            const pos = getEventPosition(evt, canvas);
+            last = calculeCoordonnees(pos.x, pos.y, canvas, ratio, state.scale);
+            meanStart = pt(state.xMean, state.yMean);
+            draggedStart = calculeCoordonnees(pos.x, pos.y, canvas, ratio, state.scale);
+            dragged = false;
+            dragStart = true;
+        }
+    });
+    canvas.addEventListener("mousemove", (evt) => {
+        const pos = getEventPosition(evt, canvas);
+        last = calculeCoordonnees(pos.x, pos.y, canvas, ratio, state.scale);
+        dragged = true;
+        if (dragStart) {
+            state.xMean = meanStart.x + (draggedStart.x - last.x);
+            state.yMean = meanStart.y + (draggedStart.y - last.y);
+            drawFn(state.xMean, state.yMean, state.scale);
+        }
+    });
+    canvas.addEventListener("mouseup", (evt) => {
+        dragStart = false;
+        if (!dragged) {
+            zoom(evt.shiftKey ? -1 : 1);
+        }
+    });
+    const scaleFactor = 1.1;
+    function zoom(clicks) {
+        if (calculerRatio(canvas) === ratio) {
+            const pointZoom = calculePositionPx(last.x, last.y, canvas, ratio, state.scale);
+            translate(state, last.x, last.y, drawFn);
+            const factor = Math.pow(scaleFactor, clicks);
+            state.scale = state.scale / factor;
+            last = calculeCoordonnees(pointZoom.x, pointZoom.y, canvas, ratio, state.scale);
+            translate(state, -last.x, -last.y, drawFn);
+            drawFn(state.xMean, state.yMean, state.scale);
+        }
+    }
+    canvas.addEventListener("wheel", (evt) => {
+        evt.preventDefault();
+        const delta = evt.deltaY ? -evt.deltaY / 100 : 0;
+        if (delta) {
+            zoom(delta);
+        }
+    });
+    return state;
 }
