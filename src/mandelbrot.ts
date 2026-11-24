@@ -1,22 +1,7 @@
-import {
-  ajoutLegende,
-  initMovableFractal,
-  sampleColorRange,
-} from "./fractale_map.js";
+import type { HsvColor, RgbColor } from "./types/fractale.js";
+import { ajoutLegende, initMovableFractal, resolveColorAndMax } from "./fractale_map.js";
 
 export { ajoutLegende };
-
-export interface RgbColor {
-  r: number;
-  g: number;
-  b: number;
-}
-
-export interface HsvColor {
-  h: number;
-  s: number;
-  v: number;
-}
 
 export function draw(x_mean: number, y_mean: number, scale: number): void {
   const canvas = document.getElementById("fractale") as HTMLCanvasElement;
@@ -68,6 +53,14 @@ export function drawPoint(
   d[2] = 0;
   d[3] = 255;
 
+  const { max: effectiveMax, colorRange } = resolveColorAndMax(
+    width,
+    height,
+    max,
+    scale,
+    (col, row, iterMax) =>
+      itereZ(col, row, scale, x_mean, y_mean, width, height, iterMax)
+  );
   const {
     hMin: h_min,
     hMax: h_max,
@@ -75,9 +68,7 @@ export function drawPoint(
     bMax: b_max,
     iterationMin: iteration_min,
     iterationMax: iteration_max,
-  } = sampleColorRange(width, height, max, (col, row) =>
-    itereZ(col, row, scale, x_mean, y_mean, width, height, max)
-  );
+  } = colorRange;
 
   for (let row = 0; row < height; row++) {
     for (let col = 0; col < width; col++) {
@@ -89,15 +80,15 @@ export function drawPoint(
         y_mean,
         width,
         height,
-        max
+        effectiveMax
       );
-      if (iteration < max) {
-        const h0 = iteration / max;
+      if (iteration < effectiveMax) {
+        const h0 = iteration / effectiveMax;
         const h = (h0 - (h_max + h_min) / 2) / (h_max - h_min) + 1 / 2;
         const s = 1;
-        const b0 = iteration / (iteration + 8);
-        const b =
-          ((b0 - (b_max + b_min) / 2) * 0.8) / (b_max - b_min) + 1.2 / 2;
+        const b0 = h0 / (h0 + 0.8);
+        const rawB = ((b0 - (b_max + b_min) / 2) * 0.8) / (b_max - b_min) + 1.2 / 2;
+        const b = Math.max(0.2, Math.min(1, rawB));
         const hsbToRgb = HSVtoRGB(h, s, b);
         d[0] = hsbToRgb.r;
         d[1] = hsbToRgb.g;
@@ -112,7 +103,7 @@ export function drawPoint(
     }
   }
 
-  ajoutLegende(ctx, width, height, x_mean, y_mean, scale, max);
+  ajoutLegende(ctx, width, height, x_mean, y_mean, scale, effectiveMax);
 
   console.log("[h_min, h_max, b_min, b_max, iteration_min, iteration_max]", [
     h_min,
@@ -132,10 +123,17 @@ export function itereZ(
   y_mean: number,
   width: number,
   height: number,
-  max: number
+  max: number,
 ): number {
   const c_re = ((scale / 2.0) * (col - width / 2.0) * 4.0) / width + x_mean;
   const c_im = ((scale / 2.0) * (height / 2.0 - row) * 4.0) / width + y_mean;
+  const q = (c_re - 0.25) * (c_re - 0.25) + c_im * c_im;
+  if (
+    q * (q + (c_re - 0.25)) <= 0.25 * c_im * c_im ||
+    (c_re + 1) * (c_re + 1) + c_im * c_im <= 0.0625
+  ) {
+    return max;
+  }
   let x = 0;
   let y = 0;
   let iteration = 0;

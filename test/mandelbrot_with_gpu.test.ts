@@ -10,6 +10,7 @@ vi.mock("gpu.js", () => ({
 
 import {
   initGPU,
+  resetGPUCache,
   draw,
   drawPrecise,
   drawPoint,
@@ -65,28 +66,59 @@ function setupGpuDom(): {
   const kernelMock = vi.fn(() => "rendered");
   Object.assign(kernelMock, {
     setOutput: vi.fn(() => kernelMock),
+    setDynamicOutput: vi.fn(() => kernelMock),
+    setDynamicArguments: vi.fn(() => kernelMock),
+    setLoopMaxIterations: vi.fn(() => kernelMock),
+    setTactic: vi.fn(() => kernelMock),
     setGraphical: vi.fn(() => kernelMock),
     canvas: replacementCanvas,
   });
 
+  const dummyRef = new Float32Array([0, 0]);
   const gpuInstanceMock = {
     createKernel: vi.fn((fn: unknown) => {
-      // Also exercise the kernel function in JS for coverage
+      // Also exercise the kernel function in JS for coverage (both shallow and deep FloatExp perturbation modes)
       if (typeof fn === "function") {
         const ctxThis = {
           thread: { x: 0, y: 0, z: 0 },
           output: { x: 10, y: 10, z: 1 },
           color: vi.fn(),
         };
-        // Exercise outside (escapes) and inside (max iterations) + all 6 HSV sectors
-        fn.call(ctxThis, 2, 0, 0, 10, 0.1, 1, 0.1, 0.9);
-        fn.call({ ...ctxThis, thread: { x: 5, y: 5, z: 0 } }, 2, 0, 0, 10, 0.1, 1, 0.1, 0.9);
-        // Hit all cas 0..5 by varying h_min/h_max so h = hTarget
-        for (let s = 0; s < 6; s++) {
+        // Shallow mode (usePerturb = 0): outside, cardioid (0,0), period-2 bulb (-1,0), bounded loop
+        fn.call(ctxThis, 2, 0, 0, 10, 0.1, 1, 0.1, 0.9, 0, dummyRef, dummyRef, dummyRef, 1, 1, 1);
+        fn.call({ ...ctxThis, thread: { x: 5, y: 5, z: 0 } }, 2, 0, 0, 10, 0.1, 1, 0.1, 0.9, 0, dummyRef, dummyRef, dummyRef, 1, 1, 1);
+        fn.call({ ...ctxThis, thread: { x: 5, y: 5, z: 0 } }, 2, -1, 0, 10, 0.1, 1, 0.1, 0.9, 0, dummyRef, dummyRef, dummyRef, 1, 1, 1);
+        fn.call({ ...ctxThis, thread: { x: 5, y: 5, z: 0 } }, 1, 0, 0.75, 2, 0.1, 1, 0.1, 0.9, 0, dummyRef, dummyRef, dummyRef, 1, 1, 0);
+        // Deep FloatExp perturbation mode (usePerturb = 1) at ultra-deep exp = -170 (~1e-51)!
+        const tipOrbitRe = new Float32Array(100);
+        const tipOrbitIm = new Float32Array(100);
+        const tipOrbitExp = new Float32Array(100);
+        tipOrbitRe[1] = -1;
+        tipOrbitExp[1] = 1;
+        for (let k = 2; k < 100; k++) {
+          tipOrbitRe[k] = 1;
+          tipOrbitExp[k] = 1;
+        }
+        // thread.x = 0 -> negative dc (-2 - 1e-51) grows by 4^k and escapes around iter 85!
+        fn.call({ ...ctxThis, thread: { x: 0, y: 5, z: 0 } }, 0, -2, 0, 95, 0.1, 1, 0.1, 0.9, 1, tipOrbitRe, tipOrbitIm, tipOrbitExp, 95, 1, -170);
+        // Center pixel (dc = 0) stays bounded
+        fn.call({ ...ctxThis, thread: { x: 5, y: 5, z: 0 } }, 0, -2, 0, 10, 0.1, 1, 0.1, 0.9, 1, tipOrbitRe, tipOrbitIm, tipOrbitExp, 10, 1, -170);
+        // Rebasing branches (diffZ < -15, within [-15, 15], and m >= refEscapeIter)
+        const refRe = new Float32Array([0, -1, 0.5, -1, 0]);
+        const refIm = new Float32Array([0, 0, 0, 0, 0]);
+        const refExp = new Float32Array([0, 0, -200, 0, 0]);
+        fn.call(ctxThis, 0, -1, 0, 6, 0.1, 1, 0.1, 0.9, 1, refRe, refIm, refExp, 2, 1, -5);
+        fn.call({ ...ctxThis, thread: { x: 8, y: 5, z: 0 } }, 0, -1, 0, 5, 0.1, 1, 0.1, 0.9, 1, refRe, refIm, new Float32Array([0, 0, 0, 0, 0]), 4, 1, 0);
+        const escRefRe = new Float32Array([0, 0.75]);
+        const escRefIm = new Float32Array([0, 0]);
+        const escRefExp = new Float32Array([0, 3]);
+        fn.call(ctxThis, 0, 6, 0, 10, 0.1, 1, 0.1, 0.9, 1, escRefRe, escRefIm, escRefExp, 1, 1, -2);
+        // Hit all cas 0..5 including negative h wrapping
+        for (let s = -2; s < 6; s++) {
           const h0 = 0.1; // iteration 1 / 10
           const hTarget = (s + 0.1) / 6;
           const hMin = h0 - hTarget;
-          fn.call(ctxThis, 2, 0, 0, 10, hMin, hMin + 1, 0.1, 0.9);
+          fn.call(ctxThis, 2, 0, 0, 10, hMin, hMin + 1, 0.1, 0.9, 0, dummyRef, dummyRef, dummyRef, 1, 1, 1);
         }
       }
       return kernelMock;
@@ -100,13 +132,15 @@ function setupGpuDom(): {
 
 describe("mandelbrot_with_gpu", () => {
   beforeEach(() => {
+    resetGPUCache();
     vi.restoreAllMocks();
   });
 
-  it("initGPU instantiates GPU from gpu.js", () => {
+  it("initGPU instantiates and caches GPU from gpu.js", () => {
     const { gpuInstanceMock } = setupGpuDom();
     const instance = initGPU();
     expect(instance).toBe(gpuInstanceMock);
+    expect(initGPU()).toBe(instance);
   });
 
   it("itereZ computes Mandelbrot iterations", () => {
@@ -177,6 +211,10 @@ describe("mandelbrot_with_gpu", () => {
       const k = vi.fn(() => "rendered");
       return Object.assign(k, {
         setOutput: vi.fn(() => k),
+        setDynamicOutput: vi.fn(() => k),
+        setDynamicArguments: vi.fn(() => k),
+        setLoopMaxIterations: vi.fn(() => k),
+        setTactic: vi.fn(() => k),
         setGraphical: vi.fn(() => k),
         canvas: document.createElement("canvas"),
       });
@@ -185,35 +223,47 @@ describe("mandelbrot_with_gpu", () => {
     drawPoint(0, 0, 2, 10);
     expect(capturedKernel).toBeDefined();
 
-    // At xMean=0, yMean=1.5, scale=1, max=2:
-    // top (thread.y=10) -> c_im = +2.5 (escapes immediately at iter 1 -> colored)
-    // bottom (thread.y=0) -> c_im = +0.5 (stays bounded at iter 2 -> black [0,0,0])
+    const emptyRef = new Float32Array([0, 0]);
     const colorTop = vi.fn();
     capturedKernel!.call(
       { thread: { x: 5, y: 10, z: 0 }, output: { x: 10, y: 10, z: 1 }, color: colorTop },
-      1, 0, 1.5, 2, 0.1, 1, 0.1, 0.9
+      1, 0, 1.5, 2, 0.1, 1, 0.1, 0.9, 0, emptyRef, emptyRef, emptyRef, 1, 1, 0
     );
     const colorBottom = vi.fn();
     capturedKernel!.call(
       { thread: { x: 5, y: 0, z: 0 }, output: { x: 10, y: 10, z: 1 }, color: colorBottom },
-      1, 0, 1.5, 2, 0.1, 1, 0.1, 0.9
+      1, 0, 1.5, 2, 0.1, 1, 0.1, 0.9, 0, emptyRef, emptyRef, emptyRef, 1, 1, 0
     );
     expect(colorTop.mock.calls[0]!.slice(0, 3)).not.toEqual([0, 0, 0]);
-    expect(colorBottom).toHaveBeenCalledWith(0, 0, 0, 255);
+    expect(colorBottom).toHaveBeenCalledWith(0, 0, 0, 1);
   });
 
-  it("draw, drawPrecise, and drawPoint render onto #fractale without removing it", () => {
-    const { canvas, replacementCanvas, ctxMock, kernelMock } = setupGpuDom();
-    vi.spyOn(console, "log").mockImplementation(() => {});
+  it("switches to FloatExp perturbation mode past 1e-18 (e.g. 1e-50) with highp precision", () => {
+    const { kernelMock } = setupGpuDom();
+    drawPoint(-2, 0, 1e-50, 200);
+    expect((kernelMock as unknown as { setTactic: ReturnType<typeof vi.fn> }).setTactic).toHaveBeenCalledWith("precision");
+    const callArgs = kernelMock.mock.calls[0] as unknown[];
+    // args: [scale, x_mean, y_mean, max, h_min, h_max, b_min, b_max, usePerturb, refRe, refIm, refExp, refEscapeIter, scaleMantissa, scaleExp]
+    expect(callArgs[8]).toBe(1);
+    expect(callArgs[9]).toBeInstanceOf(Float32Array);
+    expect(callArgs[14]).toBeLessThan(-160);
+  });
+
+  it("reuses a single GPU instance and compiled kernel across frames and preserves width/height on draw", () => {
+    const { canvas, replacementCanvas, ctxMock, kernelMock, gpuInstanceMock } =
+      setupGpuDom();
 
     draw(0, 0, 2);
-    expect(kernelMock).toHaveBeenCalled();
+    draw(0.1, 0.1, 1.8);
+    expect(gpuInstanceMock.createKernel).toHaveBeenCalledTimes(1);
+    expect(kernelMock).toHaveBeenCalledTimes(2);
+    expect(canvas.width).toBe(30);
+    expect(canvas.height).toBe(30);
     expect(document.getElementById("fractale")).toBe(canvas);
     expect(ctxMock.drawImage).toHaveBeenCalledWith(replacementCanvas, 0, 0);
 
     drawPrecise(0, 0, 2);
-    expect(canvas.width).toBe(30);
-    expect(canvas.height).toBe(30);
+    expect(gpuInstanceMock.createKernel).toHaveBeenCalledTimes(1);
 
     // When getContext returns null
     vi.spyOn(canvas, "getContext").mockReturnValue(null);

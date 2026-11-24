@@ -33,3 +33,11 @@ Les sources TypeScript sont dans `src/` et les tests dans `test/`. Vite génère
 * `npm run typecheck` — vérification TypeScript (`tsc --noEmit`)
 * `npm test` — exécution des tests unitaires Vitest
 * `npm run test:coverage` — tests Vitest avec rapport de couverture
+
+## TODO
+
+* [x] Ajouter un mode « itérations auto » adaptatif selon le niveau de zoom et la position
+* [x] Désactiver le champ `#max` lorsque « Itérations auto » est coché
+* [x] Deep zoom GPU précision arbitraire (émulation BigDecimal / BigInt + perturbation theory) pour dépasser `float32`/`float64`
+* [ ] Zoom continu tant que le clic gauche est maintenu, dézoom au clic droit
+* [ ] Ajouter un mode « teinte (hue) auto » et un contrôle pour configurer la teinte

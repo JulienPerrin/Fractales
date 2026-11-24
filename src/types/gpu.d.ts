@@ -7,6 +7,10 @@ export interface GPUKernelContext {
 export interface GPUKernel<TArgs extends unknown[] = unknown[], TReturn = unknown> {
   (...args: TArgs): TReturn;
   setOutput(dimensions: number[]): this;
+  setDynamicOutput(flag: boolean): this;
+  setDynamicArguments(flag: boolean): this;
+  setLoopMaxIterations(max: number): this;
+  setTactic(tactic: "speed" | "balanced" | "precision"): this;
   setGraphical(graphical: boolean): this;
   readonly canvas: HTMLCanvasElement;
 }
