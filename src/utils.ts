@@ -1,15 +1,6 @@
-export interface Point {
-  x: number;
-  y: number;
-}
+import type { DrawCallback, Point, ViewportState } from "./types/fractale.js";
 
-export interface ViewportState {
-  xMean: number;
-  yMean: number;
-  scale: number;
-}
-
-export type DrawCallback = (xMean: number, yMean: number, scale: number) => void;
+export type { DrawCallback, Point, ViewportState };
 
 export function pt(x: number, y: number): Point {
   return { x, y };

@@ -10,14 +10,11 @@ vi.mock("gpu.js", () => ({
 
 import {
   initGPU,
-  drawSimple,
   draw,
   drawPrecise,
   drawPoint,
-  generateIterationMatriceOf0,
   itereZ,
   ajoutLegende,
-  HSVtoRGB,
   initMandelbrotGpu,
 } from "../src/mandelbrot_with_gpu";
 
@@ -110,25 +107,9 @@ describe("mandelbrot_with_gpu", () => {
     expect(instance).toBe(gpuInstanceMock);
   });
 
-  it("generateIterationMatriceOf0 creates a zero-filled 2D matrix", () => {
-    expect(generateIterationMatriceOf0(2, 3)).toEqual([
-      [0, 0, 0],
-      [0, 0, 0],
-    ]);
-  });
-
   it("itereZ computes Mandelbrot iterations", () => {
     expect(itereZ(50, 50, 2, 0, 0, 100, 100, 20)).toBe(20);
     expect(itereZ(0, 0, 2, 10, 10, 100, 100, 20)).toBeLessThan(20);
-  });
-
-  it("HSVtoRGB returns [r, g, b] for all 6 sectors", () => {
-    expect(HSVtoRGB(0 / 6, 1, 1)).toEqual([1, 0, 0]);
-    expect(HSVtoRGB(1 / 6, 1, 1)).toEqual([1, 1, 0]);
-    expect(HSVtoRGB(2 / 6, 1, 1)).toEqual([0, 1, 0]);
-    expect(HSVtoRGB(3 / 6, 1, 1)).toEqual([0, 1, 1]);
-    expect(HSVtoRGB(4 / 6, 1, 1)).toEqual([0, 0, 1]);
-    expect(HSVtoRGB(5 / 6, 1, 1)).toEqual([1, 0, 1]);
   });
 
   it("ajoutLegende renders legend text and updates positionAffichee", () => {
@@ -219,17 +200,14 @@ describe("mandelbrot_with_gpu", () => {
     expect(colorBottom).toHaveBeenCalledWith(0, 0, 0, 255);
   });
 
-  it("drawSimple, draw, drawPrecise, and drawPoint render onto #fractale without removing it", () => {
+  it("draw, drawPrecise, and drawPoint render onto #fractale without removing it", () => {
     const { canvas, replacementCanvas, ctxMock, kernelMock } = setupGpuDom();
     vi.spyOn(console, "log").mockImplementation(() => {});
 
-    drawSimple();
+    draw(0, 0, 2);
     expect(kernelMock).toHaveBeenCalled();
     expect(document.getElementById("fractale")).toBe(canvas);
     expect(ctxMock.drawImage).toHaveBeenCalledWith(replacementCanvas, 0, 0);
-
-    draw(0, 0, 2);
-    expect(document.getElementById("fractale")).toBe(canvas);
 
     drawPrecise(0, 0, 2);
     expect(canvas.width).toBe(30);

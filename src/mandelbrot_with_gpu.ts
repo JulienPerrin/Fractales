@@ -1,13 +1,16 @@
 import { GPU } from "gpu.js";
 import type { GPUInstance } from "./types/gpu.js";
-import { initViewport } from "./utils.js";
+import { itereZ } from "./mandelbrot.js";
+import {
+  ajoutLegende,
+  initMovableFractal,
+  sampleColorRange,
+} from "./fractale_map.js";
+
+export { ajoutLegende, itereZ };
 
 export function initGPU(): GPUInstance {
   return new GPU();
-}
-
-export function drawSimple(): void {
-  draw(0, 0, 2);
 }
 
 export function draw(x_mean: number, y_mean: number, scale: number): void {
@@ -58,44 +61,16 @@ export function drawPoint(
   const width = canvas.width;
   const height = canvas.height;
 
-  let iteration_min = max;
-  let iteration_max = 0;
-  let h_min = 1;
-  let h_max = 0;
-  let b_min = 1;
-  let b_max = 0;
-
-  for (let col = 0; col < width; col += 15) {
-    for (let row = 0; row < height; row += 15) {
-      const iteration = itereZ(
-        col,
-        row,
-        scale,
-        x_mean,
-        y_mean,
-        width,
-        height,
-        max
-      );
-      if (iteration < max) {
-        iteration_min = Math.min(iteration, iteration_min);
-        iteration_max = Math.max(iteration, iteration_max);
-        const h = iteration / max;
-        h_min = Math.min(h, h_min);
-        h_max = Math.max(h, h_max);
-        const b = iteration / (iteration + 8);
-        b_min = Math.min(b, b_min);
-        b_max = Math.max(b, b_max);
-      }
-    }
-  }
-
-  if (h_min >= h_max || b_min >= b_max) {
-    h_min = 1 / 10;
-    h_max = 1;
-    b_min = 1 / 10;
-    b_max = 9 / 10;
-  }
+  const {
+    hMin: h_min,
+    hMax: h_max,
+    bMin: b_min,
+    bMax: b_max,
+    iterationMin: iteration_min,
+    iterationMax: iteration_max,
+  } = sampleColorRange(width, height, max, (col, row) =>
+    itereZ(col, row, scale, x_mean, y_mean, width, height, max)
+  );
 
   const render = gpu
     .createKernel(function (
@@ -202,151 +177,8 @@ export function drawPoint(
   ]);
 }
 
-export function generateIterationMatriceOf0(
-  width: number,
-  height: number
-): number[][] {
-  const matrice: number[][] = [];
-  for (let row = 0; row < width; row++) {
-    const rowArr: number[] = [];
-    for (let col = 0; col < height; col++) {
-      rowArr.push(0);
-    }
-    matrice.push(rowArr);
-  }
-  return matrice;
-}
-
-export function itereZ(
-  col: number,
-  row: number,
-  scale: number,
-  x_mean: number,
-  y_mean: number,
-  width: number,
-  height: number,
-  max: number
-): number {
-  const c_re = ((scale / 2.0) * (col - width / 2.0) * 4.0) / width + x_mean;
-  const c_im = ((scale / 2.0) * (height / 2.0 - row) * 4.0) / width + y_mean;
-  let x = 0;
-  let y = 0;
-  let iteration = 0;
-  while (x * x + y * y <= 4 && iteration < max) {
-    const x_new = x * x - y * y + c_re;
-    y = 2 * x * y + c_im;
-    x = x_new;
-    iteration++;
-  }
-  return iteration;
-}
-
-export function ajoutLegende(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  x_mean: number,
-  y_mean: number,
-  scale: number,
-  max: number
-): void {
-  const checkbox = document.getElementById("ajouterLegende") as HTMLInputElement;
-  if (checkbox.checked) {
-    ctx.font = Math.floor(width / 30) + "px Georgia";
-    ctx.textAlign = "right";
-    ctx.fillStyle = "white";
-    ctx.fillText(
-      `max_iterations : ${max}`,
-      (width * 29) / 30,
-      (height * 24) / 28
-    );
-    ctx.fillText(
-      `scale : ${scale.toPrecision(3)}`,
-      (width * 29) / 30,
-      (height * 25) / 28
-    );
-    ctx.fillText(
-      `x_mean : ${x_mean.toPrecision(3)}`,
-      (width * 29) / 30,
-      (height * 26) / 28
-    );
-    ctx.fillText(
-      `y_mean : ${y_mean.toPrecision(3)}`,
-      (width * 29) / 30,
-      (height * 27) / 28
-    );
-  }
-  const positionAffichee = document.getElementById("positionAffichee") as HTMLElement;
-  positionAffichee.innerHTML = `<p>
-		max_iterations: ${max}<br/>
-        scale: ${scale.toPrecision(3)}<br/>
-        x_mean: ${x_mean.toPrecision(3)}<br/>
-        y_mean: ${y_mean.toPrecision(3)}<br/>
-	<p>`;
-}
-
-export function HSVtoRGB(
-  h: number,
-  s: number,
-  v: number
-): [number, number, number] {
-  let r = 0;
-  let g = 0;
-  let b = 0;
-  const i = Math.floor(h * 6);
-  const f = h * 6 - i;
-  const p = v * (1 - s);
-  const q = v * (1 - f * s);
-  const t = v * (1 - (1 - f) * s);
-  const cas = ((i % 6) + 6) % 6;
-  if (cas === 0) {
-    r = v;
-    g = t;
-    b = p;
-  }
-  if (cas === 1) {
-    r = q;
-    g = v;
-    b = p;
-  }
-  if (cas === 2) {
-    r = p;
-    g = v;
-    b = t;
-  }
-  if (cas === 3) {
-    r = p;
-    g = q;
-    b = v;
-  }
-  if (cas === 4) {
-    r = t;
-    g = p;
-    b = v;
-  }
-  if (cas === 5) {
-    r = v;
-    g = p;
-    b = q;
-  }
-  return [r, g, b];
-}
-
 export function initMandelbrotGpu(): void {
-  const canvas = document.getElementById("fractale") as HTMLCanvasElement;
-  const state = initViewport(canvas, draw);
-
-  document
-    .getElementById("btnPrecise")
-    ?.addEventListener("click", () => {
-      drawPrecise(state.xMean, state.yMean, state.scale);
-    });
-
-  document
-    .getElementById("ajouterLegende")
-    ?.addEventListener("click", () => {
-      draw(state.xMean, state.yMean, state.scale);
-    });
+  initMovableFractal(draw, drawPrecise);
 }
 
 document.addEventListener("DOMContentLoaded", initMandelbrotGpu);

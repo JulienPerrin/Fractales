@@ -1,4 +1,10 @@
-import { initViewport } from "./utils.js";
+import {
+  ajoutLegende,
+  initMovableFractal,
+  sampleColorRange,
+} from "./fractale_map.js";
+
+export { ajoutLegende };
 
 export interface RgbColor {
   r: number;
@@ -10,10 +16,6 @@ export interface HsvColor {
   h: number;
   s: number;
   v: number;
-}
-
-export function drawSimple(): void {
-  draw(0, 0, 2);
 }
 
 export function draw(x_mean: number, y_mean: number, scale: number): void {
@@ -66,37 +68,16 @@ export function drawPoint(
   d[2] = 0;
   d[3] = 255;
 
-  let h_min = 1;
-  let h_max = 0;
-  let b_min = 1;
-  let b_max = 0;
-  let iteration_min = max;
-  let iteration_max = 0;
-
-  for (let col = 0; col < width; col += 15) {
-    for (let row = 0; row < height; row += 15) {
-      const iteration = itereZ(
-        col,
-        row,
-        scale,
-        x_mean,
-        y_mean,
-        width,
-        height,
-        max
-      );
-      if (iteration < max) {
-        iteration_min = Math.min(iteration, iteration_min);
-        iteration_max = Math.max(iteration, iteration_max);
-        const h = iteration / max;
-        h_min = Math.min(h, h_min);
-        h_max = Math.max(h, h_max);
-        const b = iteration / (iteration + 8);
-        b_min = Math.min(b, b_min);
-        b_max = Math.max(b, b_max);
-      }
-    }
-  }
+  const {
+    hMin: h_min,
+    hMax: h_max,
+    bMin: b_min,
+    bMax: b_max,
+    iterationMin: iteration_min,
+    iterationMax: iteration_max,
+  } = sampleColorRange(width, height, max, (col, row) =>
+    itereZ(col, row, scale, x_mean, y_mean, width, height, max)
+  );
 
   for (let row = 0; row < height; row++) {
     for (let col = 0; col < width; col++) {
@@ -167,50 +148,6 @@ export function itereZ(
   return iteration;
 }
 
-export function ajoutLegende(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  x_mean: number,
-  y_mean: number,
-  scale: number,
-  max: number
-): void {
-  const checkbox = document.getElementById("ajouterLegende") as HTMLInputElement;
-  if (checkbox.checked) {
-    ctx.font = Math.floor(width / 30) + "px Georgia";
-    ctx.textAlign = "right";
-    ctx.fillStyle = "white";
-    ctx.fillText(
-      `max_iterations : ${max}`,
-      (width * 29) / 30,
-      (height * 24) / 28
-    );
-    ctx.fillText(
-      `scale : ${scale.toPrecision(3)}`,
-      (width * 29) / 30,
-      (height * 25) / 28
-    );
-    ctx.fillText(
-      `x_mean : ${x_mean.toPrecision(3)}`,
-      (width * 29) / 30,
-      (height * 26) / 28
-    );
-    ctx.fillText(
-      `y_mean : ${y_mean.toPrecision(3)}`,
-      (width * 29) / 30,
-      (height * 27) / 28
-    );
-  }
-  const positionAffichee = document.getElementById("positionAffichee") as HTMLElement;
-  positionAffichee.innerHTML = `<p>
-		max_iterations: ${max}<br/>
-        scale: ${scale.toPrecision(3)}<br/>
-        x_mean: ${x_mean.toPrecision(3)}<br/>
-        y_mean: ${y_mean.toPrecision(3)}<br/>
-	<p>`;
-}
-
 export function HSVtoRGB(hOrObj: number | HsvColor, s = 0, v = 0): RgbColor {
   let h: number;
   if (typeof hOrObj === "object") {
@@ -272,20 +209,7 @@ export function HSVtoRGB(hOrObj: number | HsvColor, s = 0, v = 0): RgbColor {
 }
 
 export function initMandelbrot(): void {
-  const canvas = document.getElementById("fractale") as HTMLCanvasElement;
-  const state = initViewport(canvas, draw);
-
-  document
-    .getElementById("btnPrecise")
-    ?.addEventListener("click", () => {
-      drawPrecise(state.xMean, state.yMean, state.scale);
-    });
-
-  document
-    .getElementById("ajouterLegende")
-    ?.addEventListener("click", () => {
-      draw(state.xMean, state.yMean, state.scale);
-    });
+  initMovableFractal(draw, drawPrecise);
 }
 
 document.addEventListener("DOMContentLoaded", initMandelbrot);

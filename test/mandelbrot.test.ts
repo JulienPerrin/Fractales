@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
-  drawSimple,
   draw,
   drawPrecise,
   drawPoint,
@@ -85,17 +84,13 @@ describe("mandelbrot", () => {
     expect(pos.innerHTML).toContain("max_iterations: 50");
   });
 
-  it("draw, drawSimple, drawPrecise, and drawPoint render pixels and legend", () => {
+  it("draw, drawPrecise, and drawPoint render pixels and legend", () => {
     const { canvas, ctx } = setupMandelbrotDom();
     vi.spyOn(console, "log").mockImplementation(() => {});
 
-    drawSimple();
+    draw(0, 0, 2);
     expect(canvas.width).toBe(100);
     expect(canvas.height).toBe(100);
-    expect(ctx.putImageData).toHaveBeenCalledTimes(100 * 100);
-
-    (ctx.putImageData as ReturnType<typeof vi.fn>).mockClear();
-    draw(0, 0, 2);
     expect(ctx.putImageData).toHaveBeenCalledTimes(100 * 100);
 
     (ctx.putImageData as ReturnType<typeof vi.fn>).mockClear();
