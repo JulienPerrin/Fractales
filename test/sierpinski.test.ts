@@ -3,8 +3,8 @@ import {
   equilateralHeight,
   calculeNbIteration,
   sleep,
-  draw,
-  drawtorefactor,
+  createSierpinskiState,
+  renderSierpinski,
   ajoutLegende,
   initSierpinski,
 } from "../src/sierpinski";
@@ -47,9 +47,7 @@ describe("sierpinski", () => {
 
   it("equilateralHeight and calculeNbIteration compute expected values", () => {
     expect(equilateralHeight(600)).toBe(519);
-    expect(calculeNbIteration(5)).toBe(
-      Math.round(5 * 3 ** Math.log(5))
-    );
+    expect(calculeNbIteration(5)).toBe(Math.round(5 * 3 ** Math.log(5)));
   });
 
   it("sleep resolves after the given delay", async () => {
@@ -60,63 +58,144 @@ describe("sierpinski", () => {
     vi.useRealTimers();
   });
 
-  it("draw renders synchronously and covers all 3 random vertices plus legend", async () => {
-    const { ctx } = setupSierpinskiDom();
+  it("createSierpinskiState derives height and iterations reactively from width", () => {
+    const state = createSierpinskiState();
+    expect(state.width.value).toBe(600);
+    expect(state.height.value).toBe(519);
+    expect(state.iterations.value).toBe(calculeNbIteration(600));
+    expect(state.isAsync.value).toBe(true);
+    expect(state.intervalMs.value).toBe(1);
+    expect(state.showLegend.value).toBe(true);
+
+    state.width.value = 5;
+    expect(state.height.value).toBe(equilateralHeight(5));
+    expect(state.iterations.value).toBe(calculeNbIteration(5));
+  });
+
+  it("renderSierpinski renders synchronously and covers all 3 random vertices plus legend", async () => {
+    const { canvas, ctx } = setupSierpinskiDom();
     const values = [0.1, 0.5, 0.9];
     let idx = 0;
-    vi.spyOn(Math, "random").mockImplementation(() => values[idx++ % values.length]!);
+    vi.spyOn(Math, "random").mockImplementation(
+      () => values[idx++ % values.length]!
+    );
 
-    await draw();
-    expect(ctx.clearRect).toHaveBeenCalled();
-    expect(ctx.putImageData).toHaveBeenCalledTimes(calculeNbIteration(5));
+    const width = 5;
+    const height = equilateralHeight(width);
+    const iterations = calculeNbIteration(width);
+
+    await renderSierpinski(canvas, {
+      width,
+      height,
+      iterations,
+      isAsync: false,
+      showLegend: true,
+      getIntervalMs: () => 0,
+      isCancelled: () => false,
+    });
+
+    expect(ctx.clearRect).toHaveBeenCalledWith(0, 0, width, height);
+    expect(ctx.putImageData).toHaveBeenCalledTimes(iterations);
     expect(ctx.fillText).toHaveBeenCalledTimes(3);
 
     // Without legend
     (ctx.fillText as ReturnType<typeof vi.fn>).mockClear();
-    (document.getElementById("legende") as HTMLInputElement).checked = false;
-    await draw();
+    await renderSierpinski(canvas, {
+      width,
+      height,
+      iterations,
+      isAsync: false,
+      showLegend: false,
+      getIntervalMs: () => 0,
+      isCancelled: () => false,
+    });
     expect(ctx.fillText).not.toHaveBeenCalled();
   });
 
-  it("draw cancels an in-progress async draw when a new draw starts", async () => {
-    const { ctx } = setupSierpinskiDom();
-    (document.getElementById("asynchrone") as HTMLInputElement).checked = true;
-    (document.getElementById("intervalleTemps") as HTMLInputElement).value = "1";
+  it("renderSierpinski stops early when cancelled during async draw", async () => {
+    const { canvas, ctx } = setupSierpinskiDom();
+    let cancelled = false;
+    const drawPromise = renderSierpinski(canvas, {
+      width: 5,
+      height: equilateralHeight(5),
+      iterations: calculeNbIteration(5),
+      isAsync: true,
+      showLegend: true,
+      getIntervalMs: () => 1,
+      isCancelled: () => cancelled,
+    });
 
-    const first = draw();
-    // Immediately start a second synchronous draw so the first cancels
-    (document.getElementById("asynchrone") as HTMLInputElement).checked = false;
-    const second = draw();
-
-    await Promise.all([first, second]);
-    expect(ctx.putImageData).toHaveBeenCalled();
+    cancelled = true;
+    await drawPromise;
+    expect(ctx.putImageData).toHaveBeenCalledTimes(1);
+    expect(ctx.fillText).not.toHaveBeenCalled();
   });
 
-  it("handles missing 2d context gracefully", async () => {
+  it("renderSierpinski handles missing 2d context gracefully", async () => {
     const { canvas } = setupSierpinskiDom();
     vi.spyOn(canvas, "getContext").mockReturnValue(null);
-    await draw();
-    await drawtorefactor();
+    await renderSierpinski(canvas, {
+      width: 5,
+      height: equilateralHeight(5),
+      iterations: 10,
+      isAsync: false,
+      showLegend: true,
+      getIntervalMs: () => 0,
+      isCancelled: () => false,
+    });
   });
 
-  it("ajoutLegende draws 3 lines of text", () => {
+  it("ajoutLegende draws 3 lines of text with given iterations", () => {
     const { ctx } = setupSierpinskiDom();
-    ajoutLegende(ctx as unknown as CanvasRenderingContext2D, 100, 86);
+    ajoutLegende(ctx as unknown as CanvasRenderingContext2D, 100, 86, 42);
     expect(ctx.fillText).toHaveBeenCalledTimes(3);
+    expect(ctx.fillText).toHaveBeenCalledWith(
+      "nombre d'itérations : 42",
+      (100 * 29) / 30,
+      (86 * 25) / 28
+    );
   });
 
-  it("initSierpinski triggers draw on load and on control clicks", async () => {
+  it("initSierpinski binds DOM controls to signals and re-renders reactively", async () => {
     const { ctx } = setupSierpinskiDom();
-    initSierpinski();
+    const { state, dispose } = initSierpinski();
+
     await vi.waitFor(() => {
       expect(ctx.clearRect).toHaveBeenCalledTimes(1);
     });
+    expect(state.width.value).toBe(5);
+    expect(state.isAsync.value).toBe(false);
+    expect(state.intervalMs.value).toBe(0);
+    expect(state.showLegend.value).toBe(true);
 
-    document.getElementById("asynchrone")?.click();
-    document.getElementById("legende")?.click();
+    const asynchrone = document.getElementById("asynchrone") as HTMLInputElement;
+    asynchrone.checked = true;
+    asynchrone.dispatchEvent(new Event("change"));
+    expect(state.isAsync.value).toBe(true);
+
+    const intervalle = document.getElementById(
+      "intervalleTemps"
+    ) as HTMLInputElement;
+    intervalle.value = "2";
+    intervalle.dispatchEvent(new Event("input"));
+    expect(state.intervalMs.value).toBe(2);
+
+    const widthInput = document.getElementById("width") as HTMLInputElement;
+    widthInput.value = "6";
+    widthInput.dispatchEvent(new Event("change"));
+    expect(state.width.value).toBe(6);
+
+    const legende = document.getElementById("legende") as HTMLInputElement;
+    legende.checked = false;
+    legende.dispatchEvent(new Event("change"));
+    expect(state.showLegend.value).toBe(false);
+
     document.getElementById("btnPrecise")?.click();
+
     await vi.waitFor(() => {
-      expect(ctx.clearRect).toHaveBeenCalledTimes(4);
+      expect(ctx.clearRect).toHaveBeenCalledTimes(5);
     });
+
+    dispose();
   });
 });

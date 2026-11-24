@@ -1,5 +1,31 @@
-let nbSeq = 0;
-let nbIter = 0;
+import {
+  batch,
+  computed,
+  effect,
+  signal,
+  type ReadonlySignal,
+  type Signal,
+} from "@preact/signals-core";
+
+export interface SierpinskiState {
+  readonly width: Signal<number>;
+  readonly height: ReadonlySignal<number>;
+  readonly iterations: ReadonlySignal<number>;
+  readonly isAsync: Signal<boolean>;
+  readonly intervalMs: Signal<number>;
+  readonly showLegend: Signal<boolean>;
+  readonly drawTrigger: Signal<number>;
+}
+
+export interface RenderOptions {
+  readonly width: number;
+  readonly height: number;
+  readonly iterations: number;
+  readonly isAsync: boolean;
+  readonly showLegend: boolean;
+  readonly getIntervalMs: () => number;
+  readonly isCancelled: () => boolean;
+}
 
 export function equilateralHeight(width: number): number {
   return Math.floor(Math.sqrt(width * width - (width / 2) * (width / 2)));
@@ -13,105 +39,87 @@ export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function draw(): Promise<void> {
-  const canvas = document.getElementById("fractale") as HTMLCanvasElement;
-  const ctx = canvas.getContext("2d");
-  if (ctx) {
-    nbSeq++;
-    canvas.width = parseInt(
-      (document.getElementById("width") as HTMLInputElement).value,
-      10
-    );
-    canvas.height = equilateralHeight(canvas.width);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    await drawtorefactor();
-  }
+export function createSierpinskiState(): SierpinskiState {
+  const width = signal(600);
+  const height = computed(() => equilateralHeight(width.value));
+  const iterations = computed(() => calculeNbIteration(width.value));
+  const isAsync = signal(true);
+  const intervalMs = signal(1);
+  const showLegend = signal(true);
+  const drawTrigger = signal(0);
+
+  return {
+    width,
+    height,
+    iterations,
+    isAsync,
+    intervalMs,
+    showLegend,
+    drawTrigger,
+  };
 }
 
-export async function drawtorefactor(): Promise<void> {
-  const idDraw = nbSeq;
-  const canvas = document.getElementById("fractale") as HTMLCanvasElement;
+export async function renderSierpinski(
+  canvas: HTMLCanvasElement,
+  options: RenderOptions
+): Promise<void> {
   const ctx = canvas.getContext("2d");
   if (!ctx) {
     return;
   }
 
-  const width = parseInt(
-    (document.getElementById("width") as HTMLInputElement).value,
-    10
-  );
-  const height = equilateralHeight(width);
+  const { width, height, iterations, isAsync, showLegend } = options;
   canvas.width = width;
   canvas.height = height;
+  ctx.clearRect(0, 0, width, height);
 
-  const id = ctx.createImageData(1, 1);
-  const d = id.data;
-  d[0] = 192;
-  d[1] = 192;
-  d[2] = 192;
-  d[3] = 255;
+  const pixel = ctx.createImageData(1, 1);
+  pixel.data[0] = 192;
+  pixel.data[1] = 192;
+  pixel.data[2] = 192;
+  pixel.data[3] = 255;
+
+  const vertices: readonly (readonly [number, number])[] = [
+    [width, height],
+    [0, height],
+    [width / 2, 0],
+  ];
 
   let x = 0;
   let y = 0;
 
-  const xa = width;
-  const ya = height;
-  const xb = 0;
-  const yb = height;
-  const xc = width / 2;
-  const yc = height - equilateralHeight(width);
-
-  nbIter = calculeNbIteration(width);
-
-  const asynchroneInput = document.getElementById(
-    "asynchrone"
-  ) as HTMLInputElement;
-  const intervalleInput = document.getElementById(
-    "intervalleTemps"
-  ) as HTMLInputElement;
-
-  for (let i = 0; i < nbIter; i++) {
+  for (let i = 0; i < iterations; i++) {
     ctx.moveTo(x, y);
-    const aleatoire = Math.floor(Math.random() * 3);
-    switch (aleatoire) {
-      case 0:
-        x = 0.5 * (x + xa);
-        y = 0.5 * (y + ya);
-        break;
-      case 1:
-        x = 0.5 * (x + xb);
-        y = 0.5 * (y + yb);
-        break;
-      case 2:
-        x = 0.5 * (x + xc);
-        y = 0.5 * (y + yc);
-        break;
+    const vertex = vertices[Math.floor(Math.random() * 3)]!;
+    x = 0.5 * (x + vertex[0]);
+    y = 0.5 * (y + vertex[1]);
+    ctx.putImageData(pixel, x, y);
+
+    const interval = options.getIntervalMs();
+    if (isAsync && interval > 0) {
+      await sleep(interval);
     }
-    ctx.putImageData(id, x, y);
-    const intervalle = parseInt(intervalleInput.value, 10);
-    if (asynchroneInput.checked && intervalle > 0) {
-      await sleep(intervalle);
-    }
-    if (nbSeq !== idDraw) {
+    if (options.isCancelled()) {
       return;
     }
   }
 
-  if ((document.getElementById("legende") as HTMLInputElement).checked) {
-    ajoutLegende(ctx, width, height);
+  if (showLegend) {
+    ajoutLegende(ctx, width, height, iterations);
   }
 }
 
 export function ajoutLegende(
   ctx: CanvasRenderingContext2D,
   width: number,
-  height: number
+  height: number,
+  iterations: number
 ): void {
   ctx.font = Math.floor(width / 30) + "px Georgia";
   ctx.textAlign = "right";
   ctx.fillStyle = "black";
   ctx.fillText(
-    "nombre d'itérations : " + nbIter,
+    "nombre d'itérations : " + iterations,
     (width * 29) / 30,
     (height * 25) / 28
   );
@@ -127,18 +135,71 @@ export function ajoutLegende(
   );
 }
 
-export function initSierpinski(): void {
-  void draw();
+export function initSierpinski(): {
+  state: SierpinskiState;
+  dispose: () => void;
+} {
+  const canvas = document.getElementById("fractale") as HTMLCanvasElement;
+  const asynchroneInput = document.getElementById(
+    "asynchrone"
+  ) as HTMLInputElement;
+  const intervalleInput = document.getElementById(
+    "intervalleTemps"
+  ) as HTMLInputElement;
+  const widthInput = document.getElementById("width") as HTMLInputElement;
+  const legendeInput = document.getElementById("legende") as HTMLInputElement;
+  const btnPrecise = document.getElementById("btnPrecise") as HTMLInputElement;
 
-  document.getElementById("asynchrone")?.addEventListener("click", () => {
-    void draw();
+  const state = createSierpinskiState();
+
+  batch(() => {
+    state.width.value = parseInt(widthInput.value, 10);
+    state.isAsync.value = asynchroneInput.checked;
+    state.intervalMs.value = parseInt(intervalleInput.value, 10);
+    state.showLegend.value = legendeInput.checked;
   });
-  document.getElementById("legende")?.addEventListener("click", () => {
-    void draw();
+
+  asynchroneInput.addEventListener("change", () => {
+    state.isAsync.value = asynchroneInput.checked;
   });
-  document.getElementById("btnPrecise")?.addEventListener("click", () => {
-    void draw();
+  intervalleInput.addEventListener("input", () => {
+    state.intervalMs.value = parseInt(intervalleInput.value, 10);
   });
+  widthInput.addEventListener("change", () => {
+    state.width.value = parseInt(widthInput.value, 10);
+  });
+  legendeInput.addEventListener("change", () => {
+    state.showLegend.value = legendeInput.checked;
+  });
+  btnPrecise.addEventListener("click", () => {
+    state.drawTrigger.value++;
+  });
+
+  const dispose = effect(() => {
+    const width = state.width.value;
+    const height = state.height.value;
+    const iterations = state.iterations.value;
+    const isAsync = state.isAsync.value;
+    const showLegend = state.showLegend.value;
+    void state.drawTrigger.value;
+
+    let cancelled = false;
+    void renderSierpinski(canvas, {
+      width,
+      height,
+      iterations,
+      isAsync,
+      showLegend,
+      getIntervalMs: () => state.intervalMs.peek(),
+      isCancelled: () => cancelled,
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  });
+
+  return { state, dispose };
 }
 
 document.addEventListener("DOMContentLoaded", initSierpinski);

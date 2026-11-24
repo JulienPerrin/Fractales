@@ -3,10 +3,42 @@
   <head>
     <meta charset="utf-8" />
     <title>Mandelbrot</title>
-    <link rel="icon" type="image/ico" href="public/favicon.ico" />
-    <link rel="stylesheet" type="text/css" href="public/css/style.css" />
+    <link rel="icon" type="image/ico" href="favicon.ico" />
+    <link rel="stylesheet" type="text/css" href="css/style.css" />
   </head>
   <body>
-    <a href="public/index.html">Go to /public/index.html</a>
+    <!-- onload="draw(-0.77568377,0.13646737,0.01)" -->
+    <header>
+      <ul>
+        <li>
+          <a href="Mandelbrot.html"
+            >Fractale de Mandelbrot (sans accélération graphique)</a
+          >
+        </li>
+        <li>
+          <a href="Mandelbrot_with_gpu.html"
+            >Fractale de Mandelbrot (utilise le GPU, l'accélération graphique
+            doit être activée)</a
+          >
+        </li>
+        <li>
+          <a href="SierPinski.html">Triangle de SierPinski</a>
+        </li>
+      </ul>
+    </header>
+    <div>
+      <p>
+        Cette page a été créée pricipalement à visée éducative. On peut y
+        trouver diverses simulations qui génèrent des fractales. <br />
+        Il est également possible de télécharger les résultats obtenus via la
+        simulation en cliquant-droit et en selectionnant "enregistrer l'image".
+      </p>
+      <figure>
+        <img src="img/mandelbrot_elephant.png" />
+        <figcaption>
+          Example of image returned by the Mandelbrot fractale
+        </figcaption>
+      </figure>
+    </div>
   </body>
 </html>

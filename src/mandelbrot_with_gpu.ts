@@ -1,12 +1,9 @@
-import type { GPUConstructor, GPUInstance } from "./types/gpu.js";
+import { GPU } from "gpu.js";
+import type { GPUInstance } from "./types/gpu.js";
 import { initViewport } from "./utils.js";
 
 export function initGPU(): GPUInstance {
-  if (window.GPU?.GPU) {
-    return new window.GPU.GPU();
-  }
-  const GlobalGPU = (globalThis as unknown as { GPU: GPUConstructor }).GPU;
-  return new GlobalGPU();
+  return new GPU();
 }
 
 export function drawSimple(): void {

@@ -21,10 +21,6 @@ export interface GPUConstructor {
   new (): GPUInstance;
 }
 
-declare global {
-  interface Window {
-    GPU?: {
-      GPU: GPUConstructor;
-    };
-  }
+declare module "gpu.js" {
+  export const GPU: GPUConstructor;
 }

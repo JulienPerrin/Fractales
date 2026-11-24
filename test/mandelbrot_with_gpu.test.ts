@@ -1,4 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+
+const gpuConstructorMock = vi.fn();
+
+vi.mock("gpu.js", () => ({
+  GPU: function (...args: unknown[]) {
+    return gpuConstructorMock(...args);
+  },
+}));
+
 import {
   initGPU,
   drawSimple,
@@ -85,11 +94,7 @@ function setupGpuDom(): {
     }),
   };
 
-  window.GPU = {
-    GPU: vi.fn(function () {
-      return gpuInstanceMock;
-    }) as unknown as { new (): never },
-  };
+  gpuConstructorMock.mockImplementation(() => gpuInstanceMock);
 
   return { canvas, replacementCanvas, ctxMock, kernelMock, gpuInstanceMock };
 }
@@ -99,19 +104,10 @@ describe("mandelbrot_with_gpu", () => {
     vi.restoreAllMocks();
   });
 
-  it("initGPU uses window.GPU.GPU when available and falls back to global GPU", () => {
-    setupGpuDom();
-    const instance1 = initGPU();
-    expect(instance1).toBeDefined();
-
-    delete window.GPU;
-    const fallbackMock = { createKernel: vi.fn() };
-    (globalThis as Record<string, unknown>).GPU = vi.fn(function () {
-      return fallbackMock;
-    });
-    const instance2 = initGPU();
-    expect(instance2).toBe(fallbackMock);
-    delete (globalThis as Record<string, unknown>).GPU;
+  it("initGPU instantiates GPU from gpu.js", () => {
+    const { gpuInstanceMock } = setupGpuDom();
+    const instance = initGPU();
+    expect(instance).toBe(gpuInstanceMock);
   });
 
   it("generateIterationMatriceOf0 creates a zero-filled 2D matrix", () => {
