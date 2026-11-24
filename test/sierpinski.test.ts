@@ -7,7 +7,7 @@ import {
   drawtorefactor,
   ajoutLegende,
   initSierpinski,
-} from "./sierpinski";
+} from "../src/sierpinski";
 
 function setupSierpinskiDom(): {
   canvas: HTMLCanvasElement;

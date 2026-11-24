@@ -6,7 +6,7 @@ import {
   calculePositionPx,
   translate,
   initViewport,
-} from "./utils";
+} from "../src/utils";
 
 describe("utils", () => {
   let canvas: HTMLCanvasElement;

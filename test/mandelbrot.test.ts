@@ -8,7 +8,7 @@ import {
   ajoutLegende,
   HSVtoRGB,
   initMandelbrot,
-} from "./mandelbrot";
+} from "../src/mandelbrot";
 
 function setupMandelbrotDom(): {
   canvas: HTMLCanvasElement;

@@ -10,7 +10,7 @@ import {
   ajoutLegende,
   HSVtoRGB,
   initMandelbrotGpu,
-} from "./mandelbrot_with_gpu";
+} from "../src/mandelbrot_with_gpu";
 
 function setupGpuDom(): {
   canvas: HTMLCanvasElement;
