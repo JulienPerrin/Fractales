@@ -16,11 +16,13 @@ function setupMandelbrotDom(): {
   document.body.innerHTML = `
     <canvas id="fractale" width="100" height="100"></canvas>
     <figcaption id="positionAffichee"></figcaption>
-    <input type="number" id="width" value="20" />
-    <input type="number" id="height" value="20" />
-    <input type="number" id="max" value="10" />
-    <input type="button" id="btnPrecise" value="Augmenter la précision" />
-    <input type="checkbox" id="ajouterLegende" checked />
+    <form name="precision">
+      <input type="number" id="width" name="width" value="20" />
+      <input type="number" id="height" name="height" value="20" />
+      <input type="number" id="max" name="max" value="10" />
+      <input type="checkbox" id="ajouterLegende" name="ajouterLegende" checked />
+      <button type="submit" id="btnPrecise">Augmenter la précision</button>
+    </form>
   `;
 
   const canvas = document.getElementById("fractale") as HTMLCanvasElement;
@@ -106,7 +108,7 @@ describe("mandelbrot", () => {
     drawPoint(0, 0, 2, 10);
   });
 
-  it("initMandelbrot binds viewport, precision button, and legend checkbox", () => {
+  it("initMandelbrot binds viewport and updates on form submit", () => {
     const { ctx } = setupMandelbrotDom();
     vi.spyOn(console, "log").mockImplementation(() => {});
 
@@ -114,11 +116,9 @@ describe("mandelbrot", () => {
     expect(ctx.putImageData).toHaveBeenCalled();
 
     (ctx.putImageData as ReturnType<typeof vi.fn>).mockClear();
-    document.getElementById("btnPrecise")?.click();
+    document.querySelector("form")?.dispatchEvent(
+      new Event("submit", { cancelable: true })
+    );
     expect(ctx.putImageData).toHaveBeenCalledTimes(20 * 20);
-
-    (ctx.putImageData as ReturnType<typeof vi.fn>).mockClear();
-    document.getElementById("ajouterLegende")?.click();
-    expect(ctx.putImageData).toHaveBeenCalledTimes(100 * 100);
   });
 });

@@ -34,11 +34,13 @@ function setupGpuDom(): {
   document.body.innerHTML = `
     <canvas id="fractale" width="100" height="100"></canvas>
     <figcaption id="positionAffichee"></figcaption>
-    <input type="number" id="width" value="30" />
-    <input type="number" id="height" value="30" />
-    <input type="number" id="max" value="10" />
-    <input type="button" id="btnPrecise" value="Augmenter la précision" />
-    <input type="checkbox" id="ajouterLegende" checked />
+    <form name="precision">
+      <input type="number" id="width" name="width" value="30" />
+      <input type="number" id="height" name="height" value="30" />
+      <input type="number" id="max" name="max" value="10" />
+      <input type="checkbox" id="ajouterLegende" name="ajouterLegende" checked />
+      <button type="submit" id="btnPrecise">Augmenter la précision</button>
+    </form>
   `;
 
   const canvas = document.getElementById("fractale") as HTMLCanvasElement;
@@ -227,18 +229,15 @@ describe("mandelbrot_with_gpu", () => {
     initMandelbrotGpu();
     expect(kernelMock).toHaveBeenCalledTimes(1);
 
-    const btn = document.getElementById("btnPrecise") as HTMLInputElement;
-    const chk = document.getElementById("ajouterLegende") as HTMLInputElement;
-    btn.click();
-    expect(kernelMock).toHaveBeenCalledTimes(2);
-    expect(canvas.width).toBe(30);
-    expect(canvas.height).toBe(30);
-
-    chk.click();
-    expect(kernelMock).toHaveBeenCalledTimes(3);
-
     // Wheel zoom on the same #fractale canvas still works after rendering
     canvas.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, cancelable: true }));
-    expect(kernelMock.mock.calls.length).toBeGreaterThan(3);
+    const callsAfterZoom = kernelMock.mock.calls.length;
+    expect(callsAfterZoom).toBeGreaterThan(1);
+
+    const form = document.querySelector("form") as HTMLFormElement;
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    expect(kernelMock).toHaveBeenCalledTimes(callsAfterZoom + 1);
+    expect(canvas.width).toBe(30);
+    expect(canvas.height).toBe(30);
   });
 });

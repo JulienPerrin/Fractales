@@ -86,7 +86,7 @@ export function ajoutLegende(
         scale: ${scale.toPrecision(3)}<br/>
         x_mean: ${x_mean.toPrecision(3)}<br/>
         y_mean: ${y_mean.toPrecision(3)}<br/>
-	<p>`;
+	</p>`;
 }
 
 export function initMovableFractal(
@@ -98,7 +98,7 @@ export function initMovableFractal(
   const yMean = signal(0);
   const scale = signal(2);
   const precise = signal(false);
-  const legendTick = signal(0);
+  const submitTick = signal(0);
 
   initViewport(canvas, (x, y, s) => {
     batch(() => {
@@ -109,14 +109,11 @@ export function initMovableFractal(
     });
   });
 
-  document.getElementById("btnPrecise")?.addEventListener("click", () => {
-    precise.value = true;
-  });
-
-  document.getElementById("ajouterLegende")?.addEventListener("click", () => {
+  document.querySelector("form")?.addEventListener("submit", (e) => {
+    e.preventDefault();
     batch(() => {
-      precise.value = false;
-      legendTick.value++;
+      precise.value = true;
+      submitTick.value++;
     });
   });
 
@@ -125,7 +122,7 @@ export function initMovableFractal(
     const y = yMean.value;
     const s = scale.value;
     const isPrecise = precise.value;
-    void legendTick.value;
+    void submitTick.value;
 
     if (isPrecise) {
       drawPreciseFn(x, y, s);

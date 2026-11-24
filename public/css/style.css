@@ -4,8 +4,30 @@ canvas {
   max-width: 100%;
 }
 
+input,
+button {
+  font: inherit;
+  font-size: max(1rem, 1em);
+  min-block-size: 24px;
+}
+
 input[type="number"] {
-  width: 50px;
+  width: 72px;
+}
+
+input[type="checkbox"] {
+  min-inline-size: 24px;
+}
+
+@media (pointer: coarse) {
+  input,
+  button {
+    min-block-size: 44px;
+  }
+
+  input[type="checkbox"] {
+    min-inline-size: 44px;
+  }
 }
 
 figure {

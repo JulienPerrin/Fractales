@@ -15,11 +15,13 @@ function setupSierpinskiDom(): {
 } {
   document.body.innerHTML = `
     <canvas id="fractale" width="10" height="8"></canvas>
-    <input type="checkbox" id="asynchrone" />
-    <input type="number" id="intervalleTemps" value="0" />
-    <input type="number" id="width" value="5" />
-    <input type="checkbox" id="legende" checked />
-    <input type="button" id="btnPrecise" value="Augmenter précision" />
+    <form>
+      <input type="checkbox" id="asynchrone" name="asynchrone" />
+      <input type="number" id="intervalleTemps" name="intervalleTemps" value="0" />
+      <input type="number" id="width" name="width" value="5" />
+      <input type="checkbox" id="legende" name="legende" checked />
+      <button type="submit" id="btnPrecise">Appliquer / Redessiner</button>
+    </form>
   `;
 
   const canvas = document.getElementById("fractale") as HTMLCanvasElement;
@@ -156,7 +158,7 @@ describe("sierpinski", () => {
     );
   });
 
-  it("initSierpinski binds DOM controls to signals and re-renders reactively", async () => {
+  it("initSierpinski syncs signals and re-renders only on form submit", async () => {
     const { ctx } = setupSierpinskiDom();
     const { state, dispose } = initSierpinski();
 
@@ -168,32 +170,22 @@ describe("sierpinski", () => {
     expect(state.intervalMs.value).toBe(0);
     expect(state.showLegend.value).toBe(true);
 
-    const asynchrone = document.getElementById("asynchrone") as HTMLInputElement;
-    asynchrone.checked = true;
-    asynchrone.dispatchEvent(new Event("change"));
+    (document.getElementById("asynchrone") as HTMLInputElement).checked = true;
+    (document.getElementById("intervalleTemps") as HTMLInputElement).value = "2";
+    (document.getElementById("width") as HTMLInputElement).value = "6";
+    (document.getElementById("legende") as HTMLInputElement).checked = false;
+
+    document.querySelector("form")?.dispatchEvent(
+      new Event("submit", { cancelable: true })
+    );
+
     expect(state.isAsync.value).toBe(true);
-
-    const intervalle = document.getElementById(
-      "intervalleTemps"
-    ) as HTMLInputElement;
-    intervalle.value = "2";
-    intervalle.dispatchEvent(new Event("input"));
     expect(state.intervalMs.value).toBe(2);
-
-    const widthInput = document.getElementById("width") as HTMLInputElement;
-    widthInput.value = "6";
-    widthInput.dispatchEvent(new Event("change"));
     expect(state.width.value).toBe(6);
-
-    const legende = document.getElementById("legende") as HTMLInputElement;
-    legende.checked = false;
-    legende.dispatchEvent(new Event("change"));
     expect(state.showLegend.value).toBe(false);
 
-    document.getElementById("btnPrecise")?.click();
-
     await vi.waitFor(() => {
-      expect(ctx.clearRect).toHaveBeenCalledTimes(5);
+      expect(ctx.clearRect).toHaveBeenCalledTimes(2);
     });
 
     dispose();

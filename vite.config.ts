@@ -3,6 +3,17 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   base: "./",
+  plugins: [
+    {
+      name: "reload-on-html-and-public",
+      handleHotUpdate({ file, server }) {
+        if (file.endsWith(".html") || file.includes("/public/")) {
+          server.ws.send({ type: "full-reload" });
+          return [];
+        }
+      },
+    },
+  ],
   server: {
     port: 5175,
   },

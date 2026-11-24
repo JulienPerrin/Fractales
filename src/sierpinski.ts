@@ -148,31 +148,24 @@ export function initSierpinski(): {
   ) as HTMLInputElement;
   const widthInput = document.getElementById("width") as HTMLInputElement;
   const legendeInput = document.getElementById("legende") as HTMLInputElement;
-  const btnPrecise = document.getElementById("btnPrecise") as HTMLInputElement;
 
   const state = createSierpinskiState();
 
-  batch(() => {
-    state.width.value = parseInt(widthInput.value, 10);
-    state.isAsync.value = asynchroneInput.checked;
-    state.intervalMs.value = parseInt(intervalleInput.value, 10);
-    state.showLegend.value = legendeInput.checked;
-  });
+  const syncFromForm = (): void => {
+    batch(() => {
+      state.width.value = parseInt(widthInput.value, 10);
+      state.isAsync.value = asynchroneInput.checked;
+      state.intervalMs.value = parseInt(intervalleInput.value, 10);
+      state.showLegend.value = legendeInput.checked;
+      state.drawTrigger.value++;
+    });
+  };
 
-  asynchroneInput.addEventListener("change", () => {
-    state.isAsync.value = asynchroneInput.checked;
-  });
-  intervalleInput.addEventListener("input", () => {
-    state.intervalMs.value = parseInt(intervalleInput.value, 10);
-  });
-  widthInput.addEventListener("change", () => {
-    state.width.value = parseInt(widthInput.value, 10);
-  });
-  legendeInput.addEventListener("change", () => {
-    state.showLegend.value = legendeInput.checked;
-  });
-  btnPrecise.addEventListener("click", () => {
-    state.drawTrigger.value++;
+  syncFromForm();
+
+  document.querySelector("form")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    syncFromForm();
   });
 
   const dispose = effect(() => {

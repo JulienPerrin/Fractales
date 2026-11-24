@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
   <head>
     <meta charset="utf-8" />
-    <title>Mandelbrot</title>
+    <title>Mandelbrot (CPU) | Fractales</title>
     <link rel="icon" type="image/ico" href="favicon.ico" />
     <link rel="stylesheet" type="text/css" href="css/style.css" />
   </head>
   <body>
-    <!-- onload="draw(-0.77568377,0.13646737,0.01)" -->
-    <div>
+    <main>
+      <h1>Fractale de Mandelbrot (CPU)</h1>
       <p>
         Cette page utilise un algorithme simple pour générer la fractale de
         Mandelbrot. Il est possible de zoomer sur la fracale avec la molette de
@@ -20,30 +20,32 @@
         sur votre ordinateur.
       </p>
       <p>
-        Il est recommandé de désactiver l'accélération graphique pour que la fractale se charge plus vite quand on zoom et se déplace dessus. 
+        Il est recommandé de désactiver l'accélération graphique pour que la fractale se charge plus vite quand on zoom et se déplace dessus.
       </p>
       <figure>
-        <div>
-          <canvas id="fractale" width="100" height="100"></canvas>
-          <figcaption id="positionAffichee"></figcaption>
-        </div>
+        <canvas
+          id="fractale"
+          width="100"
+          height="100"
+          role="img"
+          aria-label="Fractale de Mandelbrot"
+          aria-describedby="positionAffichee"
+        ></canvas>
+        <figcaption id="positionAffichee"></figcaption>
       </figure>
-    </div>
-    <form name="precision">
-      <input type="number" id="width" value="100" />px &times;
-      <input type="number" id="height" value="100" />px <br />
-      <input type="number" id="max" value="10" /> itérations au plus
-      <input
-        type="button"
-        id="btnPrecise"
-        value="Augmenter la précision"
-      />
-    </form>
-    <input
-      type="checkbox"
-      id="ajouterLegende"
-      checked="true"
-    />Legende
+      <form name="precision">
+        <label for="width">Largeur (px) :</label>
+        <input type="number" id="width" name="width" value="100" min="1" required />
+        &times;
+        <label for="height">Hauteur (px) :</label>
+        <input type="number" id="height" name="height" value="100" min="1" required /><br />
+        <label for="max">Itérations max :</label>
+        <input type="number" id="max" name="max" value="10" min="1" required /><br />
+        <input type="checkbox" id="ajouterLegende" name="ajouterLegende" checked />
+        <label for="ajouterLegende">Afficher la légende</label><br />
+        <button type="submit" id="btnPrecise">Appliquer</button>
+      </form>
+    </main>
   </body>
   <script type="module" src="/src/mandelbrot.ts"></script>
 </html>
